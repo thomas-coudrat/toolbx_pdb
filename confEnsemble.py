@@ -3,6 +3,7 @@
 import glob
 import molecular_complex
 import os
+import sys
 import fingerprint
 import numpy
 from scipy import spatial
@@ -24,7 +25,7 @@ class ConfEnsemble:
         - 'tanimoto' = float
     """
 
-    def __init__(self, confDir):
+    def __init__(self, confDir, topX=None):
         '''
         Create a Conformations instance, with a directory path
         '''
@@ -41,6 +42,12 @@ class ConfEnsemble:
             # Initialize the self.conformations dictionary, each key points to
             # a dictionary to store the various data related to each
             # conformation
+            if topX:
+                # Only the top X conformations, sorted by alphanumeric order,
+                # will be considered if a topX value is provided
+                confPaths = sorted(confPaths)
+                confPaths = confPaths[0:topX]
+
             for confPath in confPaths:
                 confName = os.path.basename(confPath)
                 self.conformations[confName] = {'path': confPath}
@@ -65,7 +72,7 @@ class ConfEnsemble:
         if var_to_plot is not None:
             self.PCA.makePCAvars(var_to_plot)
 
-    def plotPCA(self, var_to_plot, dim):
+    def plotPCA(self, var_to_plot, dim, labelType="template"):
         """
         Print or write plots for the PCA data loaded. Run this after
         self.makePCA has been ran.
@@ -75,10 +82,17 @@ class ConfEnsemble:
             sortedConfNames = sorted(self.conformations.keys())
             labels = []
             for confName in sortedConfNames:
-                if confName in self.templates:
+                if labelType == "template":
+                    if confName in self.templates:
+                        labels.append(confName.replace(".pdb", ""))
+                    else:
+                        labels.append("")
+                elif labelType == "all":
                     labels.append(confName.replace(".pdb", ""))
                 else:
-                    labels.append("")
+                    print "This is not a recognised 'labelType' option to" \
+                        "plot the PCA coordinates:", labelType
+                    sys.exit()
             # Call the plotPCAfig method
             self.PCA.plotPCAfig(var_to_plot, labels, dim)
         else:
