@@ -22,7 +22,7 @@ read pdb "PDB_PATH_2"
 set occupancy 1.0
 
 # Make the superimposition
-superimpose align  minimize a_PDB_NAME_1. a_PDB_NAME_2.
+superimpose align exact minimize a_PDB_NAME_1. a_PDB_NAME_2.
 
 # Write the object that was just superimposed, in the same directory
 write pdb a_PDB_NAME_2. "PDB_PATH_2"
