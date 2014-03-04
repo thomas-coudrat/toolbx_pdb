@@ -30,8 +30,10 @@ def main():
 
     pdbPaths = sorted(glob.glob(pdbDir + "/*.pdb"))
 
+    print
     print "Superimposing " + str(len(pdbPaths)) + " confs from dir: " + pdbDir
     print "Template used for superimposition: " + templatePath
+    print
 
     superimpose(templatePath, pdbPaths, icm, script)
 
