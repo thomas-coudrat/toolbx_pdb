@@ -28,7 +28,7 @@ def main():
     # Get arguments
     pdbDir, templatePath = parsing()
 
-    pdbPaths = glob.glob(pdbDir)
+    pdbPaths = sorted(glob.glob(pdbDir + "/*.pdb"))
 
     print "Superimposing " + str(len(pdbPaths)) + " confs from dir: " + pdbDir
     print "Template used for superimposition: " + templatePath
