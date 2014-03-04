@@ -1,0 +1,30 @@
+#!/usr/bin/icm
+
+call '_startup'
+
+#-----------------------------------------------------------------------------
+# This superimposes PDB_NAME_2 onto PDB_NAME_1
+#
+# Thomas Coudrat, August 2013
+#-----------------------------------------------------------------------------
+
+# Parameters that were changed by the sed command
+#pdbTemplatePath = PDB_PATH_1
+#pdbToMovePath = PDB_PATH_2
+#pdbTemplateName = PDB_NAME_1
+#pdbToMoveName = PDB_NAME_2
+
+# Load both .pdb files
+read pdb "PDB_PATH_1"
+read pdb "PDB_PATH_2"
+
+# Occupancy, necessary for super imposition
+set occupancy 1.0
+
+# Make the superimposition
+superimpose align exact minimize a_PDB_NAME_1. a_PDB_NAME_2.
+
+# Write the object that was just superimposed, in the same directory
+write pdb a_PDB_NAME_2. "PDB_PATH_2"
+
+quit
