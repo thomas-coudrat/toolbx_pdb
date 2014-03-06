@@ -49,7 +49,10 @@ def parsing():
     parser.add_argument("templatePath", help=descr_templatePath)
     args = parser.parse_args()
     ensDir = args.ensDir
-    topX = int(args.topX)
+    if args.topX:
+        topX = int(args.topX)
+    else:
+        topX = None
     templatePath = args.templatePath
 
     return ensDir, topX, templatePath
