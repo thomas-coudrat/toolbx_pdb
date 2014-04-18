@@ -22,9 +22,9 @@ def main():
 
     if dendro:
         ens.printDendrogram('jaccard')
-        #ens.printDendrogram('rogerstanimoto')
+        # ens.printDendrogram('rogerstanimoto')
 
-    #ens.printFprints()
+    # ens.printFprints()
     ens.printFprintsConsensus()
 
     if pca:
@@ -32,9 +32,10 @@ def main():
         ens.plotPCA("tanimoto", dim=2)
 
     if pcaLabel:
+        ens.makePCA("tanimoto")
         ens.plotPCA("tanimoto", dim=2, labelType="all")
 
-    #ens.plotPCA("tanimoto", dim=3)
+    # ens.plotPCA("tanimoto", dim=3)
 
 
 def parsing():

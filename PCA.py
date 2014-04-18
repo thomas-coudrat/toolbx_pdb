@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # This script checks all .pdb files in a directory, and writes to a text file
 # the coordinates of the C-alphas of all those .pdb files
 # It also extracts information stored in the REMARK statement at the top of
@@ -9,7 +9,7 @@
 # so that the coordinates of only those residues are extracted and saved.
 #
 # Thomas Coudrat, September 2013
-#------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,7 +47,7 @@ class Principal_component_analysis:
 
             # Get the coords from that .pdb file
             confCoords = self.getPDBcoord(confPath)
-            #print confCoords
+            # print confCoords
             # Add this conformation's coordinates to the master array
             allConfCoords.append(confCoords)
 
@@ -142,15 +142,16 @@ class Principal_component_analysis:
             print self.pcaCoordsArray
             pca = PCA(n_components=dim)
             X_r = pca.fit(self.pcaCoordsArray).transform(self.pcaCoordsArray)
-            #print X_r
+            # print X_r
 
             # Percentage of variance explained for each components
             print('explained variance ratio (first ' + str(dim) +
                   ' components): %s' % str(pca.explained_variance_ratio_))
+            pc_labels = pca.explained_variance_ratio_
 
-            #print X_r[:, 0]
-            #print X_r[:, 1]
-            #print X_r[:, 2]
+            # print X_r[:, 0]
+            # print X_r[:, 1]
+            # print X_r[:, 2]
 
             if self.vars_data is not None:
                 if var_to_plot in self.vars_data.keys():
@@ -161,13 +162,13 @@ class Principal_component_analysis:
                         fig2D.set_facecolor('white')
                         fig2D.canvas.set_window_title("PCA 2D")
                         self.pcaSubplot(X_r, dim, varData, var_to_plot,
-                                        labels, fig2D, 111)  # , 231)
+                                        pc_labels, labels, fig2D, 111)
                     if dim == 3:
                         fig3D = plt.figure()
                         fig3D.set_facecolor('white')
                         fig3D.canvas.set_window_title("PCA 3D")
                         self.pcaSubplot(X_r, dim, varData, var_to_plot,
-                                        labels, fig3D, 111)  # , 231)
+                                        pc_labels, labels, fig3D, 111)
 
                     plt.show()
                 else:
@@ -179,7 +180,8 @@ class Principal_component_analysis:
             print "The coords onto which apply the PCA have to be extracted"
             print "First run Principal_component_analysis.makePCAvars()"
 
-    def pcaSubplot(self, X_r, dim, varData, varName, labels, fig, position):
+    def pcaSubplot(self, X_r, dim, varData, varName, pc_labels, labels, fig,
+                   position):
         """
         Get the Principal Component Analysis data for this set of coordinates
         The value of 'dim' specifies the number of dimensions to diplay
@@ -193,7 +195,9 @@ class Principal_component_analysis:
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
                 ax.annotate(label, xy=(x, y), fontsize=10,
                             ha='left', va='bottom')
-            plt.title('PCA-2D ' + varName)
+            ax.set_xlabel("PC1 (%.3f)" % pc_labels[0])
+            ax.set_ylabel("PC2 (%.3f)" % pc_labels[1])
+            # plt.title('PCA-2D ' + varName)
         if dim == 3:
             ax = fig.add_subplot(position, projection='3d')
             scat = Axes3D.scatter(ax, X_r[:, 0], X_r[:, 1], X_r[:, 2],
@@ -203,7 +207,10 @@ class Principal_component_analysis:
                     x2D, y2D, _ = proj3d.proj_transform(x, y, z, ax.get_proj())
                     ax.annotate(label, xy=(x2D, y2D), fontsize=10,
                                 ha='left', va='bottom')
-                    plt.title('PCA-3D ' + varName)
+            ax.set_xlabel("PC1 (%.3f)" % pc_labels[0])
+            ax.set_ylabel("PC2 (%.3f)" % pc_labels[1])
+            ax.set_zlabel("PC3 (%.3f)" % pc_labels[2])
+            # plt.title('PCA-3D ' + varName)
         # Plot the colorbar refering to the variable coloring the conformation
         # dots
         cb = plt.colorbar(scat)
