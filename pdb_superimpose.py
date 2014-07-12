@@ -63,7 +63,7 @@ def getPaths():
     Figure the paths to the ICM executable and the ICM superimpose script
     """
     # Script paths
-    scriptLocal = "/home/thomas/Copy/scr_pdb/super.icm"
+    scriptLocal = "/home/thomas/Copy/toolbx_pdb/super.icm"
     scriptBarcoo = "/vlsci/VR0024/tcoudrat/Scripts/pdb_scripts/super.icm"
     scriptMcc = "/nfs/home/hpcpharm/tcoudrat/Scripts/pdb_scripts/super.icm"
     # ICM path
