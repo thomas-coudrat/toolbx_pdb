@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 #
 # Work on a conformation ensemble in .pdb format and superimpose them all onto
 # a user chosen .pdb file
 #
 # Thomas Coudrat, February 2014
 #
-#------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
 
 import os
 import sys
@@ -16,6 +16,7 @@ import shutil
 import argparse
 from os.path import basename
 from subprocess import check_output, STDOUT, CalledProcessError
+import socket
 
 
 def main():
@@ -23,10 +24,11 @@ def main():
     Run the superimpose script
     """
 
-    # Get the paths corresponding to the platform where this is executed
-    icm, script = getPaths()
     # Get arguments
     pdbDir, templatePath = parsing()
+
+    # Get the paths corresponding to the platform where this is executed
+    icm, script = getPaths()
 
     pdbPaths = sorted(glob.glob(pdbDir + "/*.pdb"))
 
@@ -36,29 +38,6 @@ def main():
     print
 
     superimpose(templatePath, pdbPaths, pdbDir, icm, script)
-
-
-def getPaths():
-    """
-    Figure the paths to the ICM executable and the ICM superimpose script
-    """
-    scriptDesktop = "/home/thomas/Copy/Tools/pdb_scripts/super.icm"
-    icmDesktop = "/usr/icm-3.7-3b/icm64"
-    scriptBarcoo = "/vlsci/VR0024/tcoudrat/Scripts/pdb_scripts/super.icm"
-    icmBarcoo = "/vlsci/VR0024/tcoudrat/bin/icm-3.7-3b/icm64"
-    #icm = "~/Install/ICM-3.7.3b/icm64"
-
-    if os.path.exists(scriptDesktop):
-        script = scriptDesktop
-        icm = icmDesktop
-    elif os.path.exists(scriptBarcoo):
-        script = scriptBarcoo
-        icm = icmBarcoo
-    else:
-        print "Error with ICM executable or ICM script"
-        sys.exit()
-
-    return icm, script
 
 
 def parsing():
@@ -77,6 +56,42 @@ def parsing():
     templatePath = args.templatePath
 
     return pdbDir, templatePath
+
+
+def getPaths():
+    """
+    Figure the paths to the ICM executable and the ICM superimpose script
+    """
+    # Script paths
+    scriptLocal = "/home/thomas/Copy/scr_pdb/super.icm"
+    scriptBarcoo = "/vlsci/VR0024/tcoudrat/Scripts/pdb_scripts/super.icm"
+    scriptMcc = "/nfs/home/hpcpharm/tcoudrat/Scripts/pdb_scripts/super.icm"
+    # ICM path
+    icmBarcoo = "/vlsci/VR0024/tcoudrat/bin/icm-3.7-3b/icm64"
+    icmMcc = "/nfs/home/hpcpharm/tcoudrat/bin/icm-3.7-3b/icm64"
+    icmLaptop = "/home/thomas/bin/icm-3.8-0"
+    icmDesktop = "/usr/icm-3.7-3b/icm64"
+
+    # Get the hostname
+    hostname = socket.gethostname()
+
+    if hostname == "linux-T1650":
+        script = scriptLocal
+        icm = icmDesktop
+    elif hostname == "Idepad":
+        script = scriptLocal
+        icm = icmLaptop
+    elif hostname == "Barcoo":
+        script = scriptBarcoo
+        icm = icmBarcoo
+    elif hostname == "msgln6.its.monash.edu.au":
+        script = scriptMcc
+        icm = icmMcc
+    else:
+        print "Error with ICM executable or ICM script"
+        sys.exit()
+
+    return icm, script
 
 
 def superimpose(templatePath, pdbPaths, pdbDir, icm, script):
@@ -103,13 +118,13 @@ def superimpose(templatePath, pdbPaths, pdbDir, icm, script):
 
         # Make the sed changes
         os.system("sed -e 's|PDB_PATH_1|" + templatePath + "|g' " +
-            tempScript + " -i")
+                  tempScript + " -i")
         os.system("sed -e 's|PDB_PATH_2|" + pdbPath + "|g' " +
-            tempScript + " -i")
+                  tempScript + " -i")
         os.system("sed -e 's|PDB_NAME_1|" + templateName + "|g' " +
-            tempScript + " -i")
+                  tempScript + " -i")
         os.system("sed -e 's|PDB_NAME_2|" + pdbName + "|g' " +
-            tempScript + " -i")
+                  tempScript + " -i")
 
         print pdbName
         # Execute the temp script
