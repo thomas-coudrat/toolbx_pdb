@@ -64,8 +64,8 @@ def getPaths():
     """
     # Script paths
     scriptLocal = "/home/thomas/Copy/toolbx_pdb/super.icm"
-    scriptBarcoo = "/vlsci/VR0024/tcoudrat/Scripts/pdb_scripts/super.icm"
-    scriptMcc = "/nfs/home/hpcpharm/tcoudrat/Scripts/pdb_scripts/super.icm"
+    scriptBarcoo = "/vlsci/VR0024/tcoudrat/Scripts/toolbx_pdb/super.icm"
+    scriptMcc = "/nfs/home/hpcpharm/tcoudrat/Scripts/toolbx_pdb/super.icm"
     # ICM path
     icmBarcoo = "/vlsci/VR0024/tcoudrat/bin/icm-3.7-3b/icm64"
     icmMcc = "/nfs/home/hpcpharm/tcoudrat/bin/icm-3.7-3b/icm64"
