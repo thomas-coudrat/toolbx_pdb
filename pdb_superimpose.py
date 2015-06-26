@@ -6,6 +6,7 @@
 # a user chosen .pdb file
 #
 # Thomas Coudrat, February 2014
+# thomas.coudrat@gmail.com
 #
 # ------------------------------------------------------------------------------
 
@@ -17,6 +18,7 @@ import argparse
 from os.path import basename
 from subprocess import check_output, STDOUT, CalledProcessError
 import socket
+import json
 
 
 def main():
@@ -30,6 +32,7 @@ def main():
     # Get the paths corresponding to the platform where this is executed
     icm, script = getPaths()
 
+    # Get paths of all .pdb files in this directory
     pdbPaths = sorted(glob.glob(pdbDir + "/*.pdb"))
 
     print
@@ -48,10 +51,13 @@ def parsing():
     descr_pdbDir = "Directory containing conformation ensemble"
     descr_templatePath = "Template onto which superimpose the conformation " \
         "ensemble"
+
     parser = argparse.ArgumentParser(description=descr)
     parser.add_argument("pdbDir", help=descr_pdbDir)
     parser.add_argument("templatePath", help=descr_templatePath)
+
     args = parser.parse_args()
+
     pdbDir = args.pdbDir
     templatePath = args.templatePath
 
@@ -62,33 +68,26 @@ def getPaths():
     """
     Figure the paths to the ICM executable and the ICM superimpose script
     """
-    # Script paths
-    scriptLocal = "/home/thomas/Copy/toolbx_pdb/super.icm"
-    scriptBarcoo = "/vlsci/VR0024/tcoudrat/Scripts/toolbx_pdb/super.icm"
-    scriptMcc = "/nfs/home/hpcpharm/tcoudrat/Scripts/toolbx_pdb/super.icm"
-    # ICM path
-    icmBarcoo = "/vlsci/VR0024/tcoudrat/bin/icm-3.7-3b/icm64"
-    icmMcc = "/nfs/home/hpcpharm/tcoudrat/bin/icm-3.7-3b/icm64"
-    icmLaptop = "/home/thomas/bin/icm-3.8-0"
-    icmDesktop = "/usr/icm-3.7-3b/icm64"
+
+    # This Json file stores the ICM executable locations for each platform
+    hostFiles_json = os.path.dirname(os.path.realpath(__file__)) + \
+        "/hostFiles.json"
+
+    # Read content of .json file
+    with open(hostFiles_json, "r") as jsonFile:
+        hostFiles_dict = json.load(jsonFile)
 
     # Get the hostname
     hostname = socket.gethostname()
 
-    if hostname == "linux-T1650":
-        script = scriptLocal
-        icm = icmDesktop
-    elif hostname == "Idepad":
-        script = scriptLocal
-        icm = icmLaptop
-    elif hostname == "Barcoo":
-        script = scriptBarcoo
-        icm = icmBarcoo
-    elif hostname == "msgln6.its.monash.edu.au":
-        script = scriptMcc
-        icm = icmMcc
+    # Verify that the current hostname is present in the config file loaded from
+    # json
+    if hostname in hostFiles_dict.keys():
+        icm = hostFiles_dict[hostname][0]
+        script = hostFiles_dict[hostname][1]
     else:
-        print "Error with ICM executable or ICM script"
+        print "Error: hostname " + hostname + " filepaths not configured in " \
+            " ./hostFiles.json"
         sys.exit()
 
     return icm, script
