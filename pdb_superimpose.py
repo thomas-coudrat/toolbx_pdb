@@ -35,12 +35,19 @@ def main():
     # Get paths of all .pdb files in this directory
     pdbPaths = sorted(glob.glob(pdbDir + "/*.pdb"))
 
-    print
-    print "Superimposing " + str(len(pdbPaths)) + " confs from dir: " + pdbDir
-    print "Template used for superimposition: " + templatePath
-    print
+    print("\nSuperimposing " + str(len(pdbPaths)) +
+          " confs from dir: " + pdbDir)
+    print("Template used for superimposition: " + templatePath)
 
+    # Run the superimposition, using an ICM script
     superimpose(templatePath, pdbPaths, pdbDir, icm, script)
+
+    # Finally, rename the directory to notify that the contained structures
+    # were superimposed
+    if pdbDir.endswith("_super/"):
+        print("\nDirectory not renamed: structures were already superimposed")
+    else:
+        os.rename(pdbDir, pdbDir.replace("/", "_super/"))
 
 
 def parsing():
@@ -70,8 +77,8 @@ def getPaths():
     """
 
     # This Json file stores the ICM executable locations for each platform
-    hostFiles_json = os.path.dirname(os.path.realpath(__file__)) + \
-        "/hostFiles.json"
+    pathExecutable = os.path.dirname(os.path.realpath(__file__))
+    hostFiles_json = pathExecutable + "/hostFiles.json"
 
     # Read content of .json file
     with open(hostFiles_json, "r") as jsonFile:
@@ -86,8 +93,8 @@ def getPaths():
         icm = hostFiles_dict[hostname][0]
         script = hostFiles_dict[hostname][1]
     else:
-        print "Error: hostname " + hostname + " filepaths not configured in " \
-            " ./hostFiles.json"
+        print("Error: hostname " + hostname + " filepaths not configured in" +
+              " ./hostFiles.json")
         sys.exit()
 
     return icm, script
@@ -125,13 +132,13 @@ def superimpose(templatePath, pdbPaths, pdbDir, icm, script):
         os.system("sed -e 's|PDB_NAME_2|" + pdbName + "|g' " +
                   tempScript + " -i")
 
-        print pdbName
+        print(pdbName)
         # Execute the temp script
         try:
             check_output(icm + " -s " + tempScript, stderr=STDOUT, shell=True)
-        except CalledProcessError, e:
-            print "\n Error during the ICM script execution"
-            print e.output
+        except CalledProcessError as e:
+            print("\n Error during the ICM script execution")
+            print(e.output)
             sys.exit()
 
         # Remove the temp script
