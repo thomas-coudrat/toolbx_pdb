@@ -111,9 +111,9 @@ class Complex:
         sortedKeys.sort()
 
         if len(sortedKeys) == 0:
-            print "No residue list loaded"
+            print("No residue list loaded")
         else:
-            print ','.join(sortedKeys)
+            print(','.join(sortedKeys))
 
     def getResidues(self):
         '''
@@ -123,7 +123,7 @@ class Complex:
         sortedKeys.sort()
 
         if len(sortedKeys) == 0:
-            print "No residue list loaded"
+            print("No residue list loaded")
         else:
             return sortedKeys
 
@@ -137,7 +137,7 @@ class Complex:
         consensusResList = []
 
         if len(sortedKeys) == 0:
-            print "No residue list loaded"
+            print("No residue list loaded")
         else:
             for resTitle in sortedKeys:
                 residue, resRings, isConsensus = self.residues[resTitle]
@@ -151,17 +151,17 @@ class Complex:
         Print out the stored ligand
         '''
         if not self.ligand:
-            print "No ligand is loaded in this macromolecule object"
+            print("No ligand is loaded in this macromolecule object")
         else:
             ligand, ligRings = self.ligand
-            print ligand.GetTitle()
+            print(ligand.GetTitle())
 
     def getLigand(self):
         '''
         Return the ligand data
         '''
         if not self.ligand:
-            print "No ligand is loaded in this macromolecule object"
+            print("No ligand is loaded in this macromolecule object")
         else:
             return self.ligand
 
@@ -178,7 +178,7 @@ class Complex:
         fprintList = []
 
         if len(sortedKeys) == 0:
-            print "There is no residue in the molecular complex"
+            print("There is no residue in the molecular complex")
         else:
             for key in sortedKeys:
                 residue, resFprint, resRings = self.residues[key]

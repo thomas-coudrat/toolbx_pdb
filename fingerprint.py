@@ -101,9 +101,9 @@ class Fingerprint:
         '''
 
         if len(self.fprint) == 0:
-            print "There is no fprint calculated. Generate fprints first."
+            print("There is no fprint calculated. Generate fprints first.")
         else:
-            print ",".join(self.fprint)
+            print(",".join(self.fprint))
 
     def getFprint(self):
         '''
@@ -112,7 +112,7 @@ class Fingerprint:
         '''
 
         if len(self.fprint) == 0:
-            print "There is no fprint calculated. Generate fprints first"
+            print("There is no fprint calculated. Generate fprints first")
         else:
             return self.fprint
 
@@ -121,9 +121,9 @@ class Fingerprint:
         Print the consensus fprint
         '''
         if len(self.fprintConsensus) == 0:
-            print "There is no conensus fprint calculated, generate if first"
+            print("There is no conensus fprint calculated, generate if first")
         else:
-            print ",".join(self.fprintConsensus)
+            print(",".join(self.fprintConsensus))
 
     def getFprintConsensus(self):
         '''
@@ -131,7 +131,7 @@ class Fingerprint:
         '''
 
         if len(self.fprintConsensus) == 0:
-            print "There is no censensus fprint calculated, generate if first"
+            print("There is no censensus fprint calculated, generate if first")
         else:
             return self.fprintConsensus
 

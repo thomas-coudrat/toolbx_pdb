@@ -139,7 +139,7 @@ class Principal_component_analysis:
         be displayed
         """
         if self.pcaCoordsArray is not None:
-            print self.pcaCoordsArray
+            print(self.pcaCoordsArray)
             pca = PCA(n_components=dim)
             X_r = pca.fit(self.pcaCoordsArray).transform(self.pcaCoordsArray)
             # print X_r
@@ -172,13 +172,13 @@ class Principal_component_analysis:
 
                     plt.show()
                 else:
-                    print "The variable required is not in the loaded set"
+                    print("The variable required is not in the loaded set")
             else:
-                print "There is no variable data loaded"
-                print "Firt run Principal_component_analysis.makePCAvars(...)"
+                print("There is no variable data loaded")
+                print("Firt run Principal_component_analysis.makePCAvars(...)")
         else:
-            print "The coords onto which apply the PCA have to be extracted"
-            print "First run Principal_component_analysis.makePCAvars()"
+            print("The coords onto which apply the PCA have to be extracted")
+            print("First run Principal_component_analysis.makePCAvars()")
 
     def pcaSubplot(self, X_r, dim, varData, varName, pc_labels, labels, fig,
                    position):

@@ -37,7 +37,7 @@ class ConfEnsemble:
 
         # Check if any .pdb file were found
         if len(confPaths) == 0:
-            print "This directory does not contains any .pdb files!"
+            print("This directory does not contains any .pdb files!")
         else:
             # Initialize the self.conformations dictionary, each key points to
             # a dictionary to store the various data related to each
@@ -90,14 +90,14 @@ class ConfEnsemble:
                 elif labelType == "all":
                     labels.append(confName.replace(".pdb", ""))
                 else:
-                    print "This is not a recognised 'labelType' option to" \
-                        "plot the PCA coordinates:", labelType
+                    print("This is not a recognised 'labelType' option to " +
+                          "plot the PCA coordinates:" + labelType)
                     sys.exit()
             # Call the plotPCAfig method
             self.PCA.plotPCAfig(var_to_plot, labels, dim)
         else:
-            print "You first have to create a PCA object with the function"
-            print "Use the function confEnsemble.makePCA()"
+            print("You first have to create a PCA object with the function")
+            print("Use the function confEnsemble.makePCA()")
 
     def addTemplate(self, pdbPath):
         '''
@@ -113,7 +113,7 @@ class ConfEnsemble:
             self.conformations[pdbName] = {'path': pdbPath}
             self.templates.append(pdbName)
         else:
-            print "The following is not a .pdb file", pdbPath
+            print("The following is not a .pdb file" + pdbPath)
 
     def makeFakeValue(self):
         '''
@@ -155,11 +155,11 @@ class ConfEnsemble:
                 # Store this coef
                 conformationDict['tanimoto'] = tanimotoCoef
 
-            print "Tanimoto coefficients were calculated using template:", \
-                templateName
+            print("Tanimoto coefficients were calculated using template:" +
+                  templateName)
         else:
-            print "This template was not found for tanimoto calculations", \
-                templateName
+            print("This template was not found for tanimoto calculations" +
+                  templateName)
 
     def tanimoto(self, fprintListA, fprintListB):
         '''
@@ -262,7 +262,7 @@ class ConfEnsemble:
         for i, confName in enumerate(sortedKeys):
             conformationDict = self.conformations[confName]
             value = conformationDict[val]
-            print confName, value
+            print(confName + " " + value)
             xData.append(i)
             yData.append(value)
 
@@ -289,7 +289,7 @@ class ConfEnsemble:
             molComplex.makeComplex()
             # store it in the dictionary
             conformationDict['complex'] = molComplex
-            print "Mol-complex: " + str(i + 1) + "/" + str(total)
+            print("Mol-complex: " + str(i + 1) + "/" + str(total))
 
     def makeFprints(self):
         '''
@@ -310,7 +310,7 @@ class ConfEnsemble:
             fprint.generateFprint()
             # Store this fprint object into the corresponding confDict dict
             conformationDict['fprint'] = fprint
-            print "fprint: " + str(i + 1) + "/" + str(total)
+            print("fprint: " + str(i + 1) + "/" + str(total))
 
     def makeConsensusSeq(self):
         '''
@@ -370,9 +370,8 @@ class ConfEnsemble:
 
         consensusTemp.sort()
         consensusLen = str(len(consensusTemp))
-        print "Consensus sequence of length " + consensusLen + " generated:"
-        print ",".join(consensusTemp)
-        print
+        print("Consensus sequence of length " + consensusLen + " generated:")
+        print(",".join(consensusTemp) + "\n")
 
     def printFprints(self):
         '''
@@ -393,10 +392,9 @@ class ConfEnsemble:
             fprintList = conformationDict['fprint'].getFprint()
 
             # Print the data
-            print confName, str(len(resList))
-            print ",".join(resList)
-            print ",".join(fprintList)
-            print
+            print(confName + " " + str(len(resList)))
+            print(",".join(resList))
+            print(",".join(fprintList) + "\n")
 
     def printFprintsConsensus(self):
         '''
@@ -412,7 +410,6 @@ class ConfEnsemble:
             fprintList = conformationDict['fprint'].getFprintConsensus()
 
             # Print the data
-            print confName, str(len(resList))
-            print ",".join(resList)
-            print ",".join(fprintList)
-            print
+            print(confName + " " + str(len(resList)))
+            print(",".join(resList))
+            print(",".join(fprintList) + "\n")
