@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from openeye import oechem
-#import os
+import os
 
 
 class Complex:
@@ -40,6 +40,7 @@ class Complex:
 
         if ifsProt.open(self.pdbPath):
             for prot in ifsProt.GetOEGraphMols():
+
                 oechem.OEPerceiveResidues(prot, oechem.OEPreserveResInfo_All)
                 hierView = oechem.OEHierView(prot)
 
@@ -78,6 +79,7 @@ class Complex:
         '''
         Get a OE residue, return a OE molecule
         '''
+
         # Creating a new Res GraphMol
         newMol = oechem.OEGraphMol()
         newMol.SetTitle(molTitle)
@@ -119,8 +121,7 @@ class Complex:
         '''
         Return the list of residue names
         '''
-        sortedKeys = self.residues.keys()
-        sortedKeys.sort()
+        sortedKeys = sorted(self.residues.keys())
 
         if len(sortedKeys) == 0:
             print("No residue list loaded")
@@ -131,8 +132,7 @@ class Complex:
         '''
         Return the lst of residues part of the consensus sequence
         '''
-        sortedKeys = self.residues.keys()
-        sortedKeys.sort()
+        sortedKeys = sorted(self.residues.keys())
 
         consensusResList = []
 
@@ -151,7 +151,8 @@ class Complex:
         Print out the stored ligand
         '''
         if not self.ligand:
-            print("No ligand is loaded in this macromolecule object")
+            molName = os.path.basename(self.pdbPath)
+            print("No ligand loaded in this macromolecule object: " + molName)
         else:
             ligand, ligRings = self.ligand
             print(ligand.GetTitle())
@@ -161,7 +162,8 @@ class Complex:
         Return the ligand data
         '''
         if not self.ligand:
-            print("No ligand is loaded in this macromolecule object")
+            molName = os.path.basename(self.pdbPath)
+            print("No ligand loaded in this macromolecule object: " + molName)
         else:
             return self.ligand
 
