@@ -175,11 +175,16 @@ class ConfEnsemble:
         fprintB = "".join(fprintListB)
 
         # Loop over each bit in current fprint
-        for k in xrange(len(fprintA)):
+        for k in range(len(fprintA)):
             num += int(fprintA[k]) * int(fprintB[k])
             denom += int(fprintA[k]) ** 2 + int(fprintB[k]) ** 2 - \
                 int(fprintA[k]) * int(fprintB[k])
-        tanimoto = num * 1.0 / denom
+
+        # Calculate tanimoto only is denominator is not 0
+        if denom == 0:
+            tanimoto = 0
+        else:
+            tanimoto = num * 1.0 / denom
 
         return 1 - round(tanimoto, 4)
 
