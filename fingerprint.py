@@ -11,7 +11,10 @@ class Fingerprint:
         self.molComplex = molComplex
         self.fprint = []
         self.fprintConsensus = []
-        self.fprintDef = fprintDef
+        if fprintDef == False:
+            self.fprintDef == 11111111111
+        else:
+            self.fprintDef = fprintDef
 
         #---------------#
         # OESubSearches #
@@ -198,7 +201,8 @@ class Fingerprint:
         # fingerprint with a fprint of zeros.
         if self.molComplex.getLigand() is None:
             for resTitle in sortedKeys:
-                self.fprint.append(11 * "0")
+                fprintSize = len(self.fprintDef.replace("0", ""))
+                self.fprint.append(fprintSize * "0")
             return
         # If there is a ligand, proceed as usual, and calculate the fprint
         else:
@@ -216,26 +220,29 @@ class Fingerprint:
             #-------------------------#
             # hydrophobe x hydrophobe #
             #-------------------------#
-            hydroph = self.check_inter(residue, ligand,
-                                       self.ssHydrophobe, self.ssHydrophobe,
-                                       hydrophDist)
-            resFprint += hydroph
+            if self.fprintDef[0] == "1":
+                hydroph = self.check_inter(residue, ligand,
+                                           self.ssHydrophobe, self.ssHydrophobe,
+                                           hydrophDist)
+                resFprint += hydroph
 
             #------------------------------#
             # donor (res) x acceptor (lig) #
             #------------------------------#
-            donAcc = self.check_hbond(residue, ligand,
-                                      self.ssDonor, self.ssAcceptor,
-                                      hbondDist, hbondAngleUp, hbondAngleLow)
-            resFprint += donAcc
+            if self.fprintDef[1] == "1":
+                donAcc = self.check_hbond(residue, ligand,
+                                          self.ssDonor, self.ssAcceptor,
+                                          hbondDist, hbondAngleUp, hbondAngleLow)
+                resFprint += donAcc
 
             #------------------------------#
             # donor (lig) x acceptor (res) #
             #------------------------------#
-            accDon = self.check_hbond(ligand, residue,
-                                      self.ssDonor, self.ssAcceptor,
-                                      hbondDist, hbondAngleUp, hbondAngleLow)
-            resFprint += accDon
+            if self.fprintDef[2] == "1":
+                accDon = self.check_hbond(ligand, residue,
+                                          self.ssDonor, self.ssAcceptor,
+                                          hbondDist, hbondAngleUp, hbondAngleLow)
+                resFprint += accDon
 
             #--------------------------------#
             # wkDon (res) x acc (lig)        #
@@ -247,26 +254,27 @@ class Fingerprint:
             # are found. Don't check the next interactions if one interaction
             # was already found
 
-            wkDonAcc = "0"
+            if self.fprintDef[3] == "1":
+                wkDonAcc = "0"
 
-            # wkDon (res) x acc (lig)
-            wkDonAcc = self.check_hbond(residue, ligand,
-                                        self.ssWkDonor, self.ssAcceptor,
-                                        wkHbondDist,
-                                        wkHbondAngleUp, wkHbondAngleLow)
-            if wkDonAcc == "0":
-                # wkDon (res) x wkAcc (lig)
+                # wkDon (res) x acc (lig)
                 wkDonAcc = self.check_hbond(residue, ligand,
-                                            self.ssWkDonor, self.ssWkAcceptor,
+                                            self.ssWkDonor, self.ssAcceptor,
                                             wkHbondDist,
                                             wkHbondAngleUp, wkHbondAngleLow)
-            if wkDonAcc == "0":
-                # don (res) x wkAcc (lig)
-                wkDonAcc = self.check_hbond(residue, ligand,
-                                            self.ssDonor, self.ssWkAcceptor,
-                                            wkHbondDist,
-                                            wkHbondAngleUp, wkHbondAngleLow)
-            resFprint += wkDonAcc
+                if wkDonAcc == "0":
+                    # wkDon (res) x wkAcc (lig)
+                    wkDonAcc = self.check_hbond(residue, ligand,
+                                                self.ssWkDonor, self.ssWkAcceptor,
+                                                wkHbondDist,
+                                                wkHbondAngleUp, wkHbondAngleLow)
+                if wkDonAcc == "0":
+                    # don (res) x wkAcc (lig)
+                    wkDonAcc = self.check_hbond(residue, ligand,
+                                                self.ssDonor, self.ssWkAcceptor,
+                                                wkHbondDist,
+                                                wkHbondAngleUp, wkHbondAngleLow)
+                resFprint += wkDonAcc
 
             #--------------------------------#
             #  don (lig) x wkAcc (res)       #
@@ -278,73 +286,80 @@ class Fingerprint:
             # are found. Don't check the next interactions if one interaction
             # was already found
 
-            wkDonAcc = "0"
+            if self.fprintDef[4] == "1":
+                wkDonAcc = "0"
 
-            # wkDon (lig) x acc (res)
-            wkDonAcc = self.check_hbond(ligand, residue,
-                                        self.ssDonor, self.ssWkAcceptor,
-                                        wkHbondDist,
-                                        wkHbondAngleUp, wkHbondAngleLow)
-            if wkDonAcc == "0":
-                # wkDon (lig) x wkAcc (res)
+                # wkDon (lig) x acc (res)
                 wkDonAcc = self.check_hbond(ligand, residue,
-                                            self.ssWkDonor, self.ssWkAcceptor,
+                                            self.ssDonor, self.ssWkAcceptor,
                                             wkHbondDist,
                                             wkHbondAngleUp, wkHbondAngleLow)
-            if wkDonAcc == "0":
-                # don (lig) x wkAcc (res)
-                wkDonAcc = self.check_hbond(ligand, residue,
-                                            self.ssWkDonor, self.ssAcceptor,
-                                            wkHbondDist,
-                                            wkHbondAngleUp, wkHbondAngleLow)
-            resFprint += wkDonAcc
+                if wkDonAcc == "0":
+                    # wkDon (lig) x wkAcc (res)
+                    wkDonAcc = self.check_hbond(ligand, residue,
+                                                self.ssWkDonor, self.ssWkAcceptor,
+                                                wkHbondDist,
+                                                wkHbondAngleUp, wkHbondAngleLow)
+                if wkDonAcc == "0":
+                    # don (lig) x wkAcc (res)
+                    wkDonAcc = self.check_hbond(ligand, residue,
+                                                self.ssWkDonor, self.ssAcceptor,
+                                                wkHbondDist,
+                                                wkHbondAngleUp, wkHbondAngleLow)
+                resFprint += wkDonAcc
 
             #----------------------------#
             # Cation (res) x Anion (lig) #
             #----------------------------#
-            catAni = self.check_inter(residue, ligand,
-                                      self.ssCation, self.ssAnion,
-                                      catAniDist)
-            resFprint += catAni
+            if self.fprintDef[5] == "1":
+                catAni = self.check_inter(residue, ligand,
+                                          self.ssCation, self.ssAnion,
+                                          catAniDist)
+                resFprint += catAni
 
             #----------------------------#
             # Anion (res) x Cation (lig) #
             #----------------------------#
-            aniCat = self.check_inter(residue, ligand,
-                                      self.ssAnion, self.ssCation,
-                                      catAniDist)
-            resFprint += aniCat
+            if self.fprintDef[6] == "1":
+                aniCat = self.check_inter(residue, ligand,
+                                          self.ssAnion, self.ssCation,
+                                          catAniDist)
+                resFprint += aniCat
 
             #----------------------------------------------------------#
             # Aromatic face2face and face2edge res x lig AND lig x res #
             #----------------------------------------------------------#
-            arom = self.check_arom(resRings, ligRings, centerMol,
-                                   resRingCenter, ligRingCenter, aromDist)
-            resFprint += arom
+            if self.fprintDef[7] == "1":
+                arom = self.check_arom(resRings, ligRings, centerMol,
+                                       resRingCenter, ligRingCenter, aromDist)
+                resFprint += arom
 
             #-------------------------#
             # Cation (res) x Pi (lig) #
             #-------------------------#
-            catPi = self.check_catPi(residue, self.ssCation,
-                                     ligRings, centerMol, ligRingCenter,
-                                     catPiDist, catPiAngleUp, catPiAngleLow)
-            resFprint += catPi
+            if self.fprintDef[8] == "1":
+                catPi = self.check_catPi(residue, self.ssCation,
+                                         ligRings, centerMol, ligRingCenter,
+                                         catPiDist, catPiAngleUp, catPiAngleLow)
+                resFprint += catPi
 
             #-------------------------#
             # Pi (res) x Cation (lig) #
             #-------------------------#
-            piCat = self.check_catPi(ligand, self.ssCation,
-                                     resRings, centerMol, resRingCenter,
-                                     catPiDist, catPiAngleUp, catPiAngleLow)
-            resFprint += piCat
+            if self.fprintDef[9] == "1":
+                piCat = self.check_catPi(ligand, self.ssCation,
+                                         resRings, centerMol, resRingCenter,
+                                         catPiDist, catPiAngleUp, catPiAngleLow)
+                resFprint += piCat
 
             #------------------------------#
             # Acceptor (res) x Metal (lig) #
             #------------------------------#
-            accMet = self.check_inter(residue, ligand,
-                                      self.ssAcceptor, self.ssMetal,
-                                      accMetDist)
-            resFprint += accMet
+            if self.fprintDef[10] == "1":
+                accMet = self.check_inter(residue, ligand,
+                                          self.ssAcceptor, self.ssMetal,
+                                          accMetDist)
+                resFprint += accMet
 
             self.fprint.append(resFprint)
 

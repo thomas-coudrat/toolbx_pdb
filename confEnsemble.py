@@ -281,6 +281,8 @@ class ConfEnsemble:
         stored in self.conformations
         '''
 
+        print("\nCreating molecular complex objects:")
+
         total = len(self.conformations)
         for i, confName in enumerate(self.conformations):
 
@@ -296,11 +298,13 @@ class ConfEnsemble:
             conformationDict['complex'] = molComplex
             print("Mol-complex: " + str(i + 1) + "/" + str(total))
 
-    def makeFprints(self):
+    def makeFprints(self, fprintDef=False):
         '''
         Initiate the creation of fprints for all the conformations stored in
         self.conformations dictionary
         '''
+
+        print("\nGenerating ligand/protein interaction fingerprints:")
 
         total = len(self.conformations)
         for i, confName in enumerate(self.conformations):
@@ -310,7 +314,7 @@ class ConfEnsemble:
             # Get the molecular complex of that conformation
             molComplex = conformationDict['complex']
             # Apply the fingerprint on that complex
-            fprint = fingerprint.Fingerprint(molComplex)
+            fprint = fingerprint.Fingerprint(molComplex, fprintDef)
             # Populate the molComplex object with the fprints
             fprint.generateFprint()
             # Store this fprint object into the corresponding confDict dict
@@ -375,7 +379,7 @@ class ConfEnsemble:
 
         consensusTemp.sort()
         consensusLen = str(len(consensusTemp))
-        print("Consensus sequence of length " + consensusLen + " generated:")
+        print("\nConsensus sequence of length " + consensusLen + " generated:")
         print(",".join(consensusTemp) + "\n")
 
     def printFprints(self):
@@ -415,6 +419,6 @@ class ConfEnsemble:
             fprintList = conformationDict['fprint'].getFprintConsensus()
 
             # Print the data
-            print(confName + " " + str(len(resList)))
-            print(",".join(resList))
-            print(",".join(fprintList) + "\n")
+            print(confName)
+            #print(",".join(resList))
+            print(",".join(fprintList))

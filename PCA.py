@@ -37,8 +37,8 @@ class Principal_component_analysis:
         allConfCoords = []
 
         # Go through the conformations in alphanumeric order
-        sortedConfNames = self.conformations.keys()
-        sortedConfNames.sort()
+        sortedConfNames = sorted(self.conformations.keys())
+        #sortedConfNames.sort()
 
         for confName in sortedConfNames:
             # Get the dictionary, and the file path
@@ -115,8 +115,9 @@ class Principal_component_analysis:
         self.vars_data[var_to_plot] = []
 
         # Go through the conformations in alphanumeric order
-        sortedConfNames = self.conformations.keys()
-        sortedConfNames.sort()
+        sortedConfNames = sorted(self.conformations.keys())
+        #sortedConfNames.sort()
+
         for confName in sortedConfNames:
             # Get the dictionary, and the file path
             conformationDict = self.conformations[confName]
