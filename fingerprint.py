@@ -11,8 +11,8 @@ class Fingerprint:
         self.molComplex = molComplex
         self.fprint = []
         self.fprintConsensus = []
-        if fprintDef == False:
-            self.fprintDef == 11111111111
+        if fprintDef == None:
+            self.fprintDef = "11111111111"
         else:
             self.fprintDef = fprintDef
 
