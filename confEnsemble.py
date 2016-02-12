@@ -8,8 +8,9 @@ import fingerprint
 import numpy
 from scipy import spatial
 from scipy import cluster
-import matplotlib
+import matplotlib.pyplot as plt
 import PCA
+import numpy as np
 
 
 class ConfEnsemble:
@@ -236,7 +237,7 @@ class ConfEnsemble:
         # other options are: single, complete, weighted, average
 
         # Representation of the heirachical clustering in the form of a tree
-        matplotlib.pyplot.figure()
+        plt.figure()
         dendro = cluster.hierarchy.dendrogram(Z,
                                               color_threshold=0.5,
                                               orientation='right')
@@ -247,7 +248,7 @@ class ConfEnsemble:
                 dendro['ivl'][int(i)] = confNamesList[int(pos)]
 
         # Display the dendrogram
-        matplotlib.pyplot.show()
+        plt.show()
 
     def plotSortedEnsemble(self, val):
         """
@@ -256,7 +257,7 @@ class ConfEnsemble:
         along the Y axis
         """
 
-        fig = matplotlib.pyplot.figure()
+        fig = plt.figure()
         axes = fig.add_subplot(111)
 
         sortedKeys = self.conformations.keys()
@@ -273,7 +274,7 @@ class ConfEnsemble:
 
         axes.plot(xData, yData)
 
-        matplotlib.pyplot.show()
+        plt.show()
 
     def makeComplexes(self):
         '''
@@ -404,6 +405,114 @@ class ConfEnsemble:
             print(confName + " " + str(len(resList)))
             print(",".join(resList))
             print(",".join(fprintList) + "\n")
+
+    def plotFprints(self, fprintDef="111111111111"):
+        """
+        Plot a graph representation of interaction fingerprints
+        """
+
+        # Color definition for the full fprint definition
+        c_hydroph = "blue"
+        c_hbond = "red"
+        c_wkHbond = "orange"
+        c_ionic = "purple"
+        c_aromatic = "green"
+        c_catPi = "pink"
+        c_metal = "yellow"
+        colors_fullFprint = [c_hydroph,
+                             c_hbond,
+                             c_hbond,
+                             c_wkHbond,
+                             c_wkHbond,
+                             c_ionic,
+                             c_ionic,
+                             c_aromatic,
+                             c_catPi,
+                             c_catPi,
+                             c_metal]
+
+        # Color palette for the current fprint definition
+        colors_customFprint = []
+        for bit, col in zip(fprintDef, colors_fullFprint):
+            if bit == "1":
+                colors_customFprint.append(col)
+
+        # Get the conformations fprints
+        fprintList = []
+        sortedConfNames = sorted(self.conformations.keys())
+        for confName in sortedConfNames:
+            # Get the dictionary of that conf
+            conformationDict = self.conformations[confName]
+            # Get the residue list
+            resList = conformationDict['complex'].getResiduesConsensus()
+            # Get the fprint list
+            fprintList.append(conformationDict['fprint'].getFprintConsensus())
+
+        # Get the size of this custom fprint
+        fp_length = len(fprintDef.replace("0", ""))
+        # Get the number of residues contained in the fprint
+        fp = fprintList[0]
+        res_number = len(fp)
+        # Get number of conformations
+        confCount = len(self.conformations.keys())
+
+        # Create the figure
+        dpiVal = 800
+        fig = plt.figure(figsize=(res_number/2,confCount*1), dpi=dpiVal)
+        ax = fig.add_subplot(111)
+
+        # Remove all but the squares
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.tick_params(left="off", top="off", bottom="off", right="off",
+                       labelbottom='off', labelleft='off')
+
+        spacerX = 1
+        spacerY = 0.0002
+        for y, (fp, conf_name) in enumerate(zip(fprintList, sortedConfNames)):
+            # Generate default fprint X and Y values positions
+            # (X values get modified in the for loop)
+            x_pos = np.arange(0, fp_length)
+            y_pos = np.array([y*spacerY] * fp_length)
+
+            # Write conformation names in front of each fprint scatter
+            ax.text(-30, y_pos[y], conf_name.replace(".pdb",""), size=8)
+
+            # Loop over each fprint section representing a residue
+            for i, (fp_segment, resName) in enumerate(zip(fp, resList)):
+
+                # Create a set of colors corresponding to "on" bits of that
+                #fp_segment and use colors defined above for the custom fprint
+                colors = ["white"] * fp_length
+                for j, bit in enumerate(fp_segment):
+                    if bit == "1":
+                        colors[j] = colors_customFprint[j]
+
+                # Plot each fprint and add an offset of "fprint length" + 1
+                # to include a gap between fp_segment
+                ax.scatter(x_pos + (i * (fp_length + spacerX)),
+                           y_pos,
+                           s=15,
+                           marker="s",
+                           c=colors,
+                           linewidths=0.3)
+
+                # Write residues only once (arbitrairly in first loop turn)
+                if y == 0:
+                    ax.text(i * (fp_length + spacerX) + (fp_length/2 - spacerX),
+                            confCount * spacerY,
+                            resName.replace("_", " "), size=8, rotation=90,
+                            verticalalignment="bottom",
+                            family="monospace")
+
+        # Set limits on the figure
+        ax.set_xlim([-20, len(fp) * (fp_length + spacerX)])
+        #ax.set_ylim([-1 * spacerY, confCount * spacerY])
+
+        # Save the figure in pdf format
+        plt.savefig("ifp.pdf", bbox_inches="tight", format="pdf", dpi=dpiVal)
 
     def printFprintsConsensus(self):
         '''

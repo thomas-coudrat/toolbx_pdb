@@ -134,7 +134,7 @@ class Fingerprint:
         '''
 
         if len(self.fprintConsensus) == 0:
-            print("There is no censensus fprint calculated, generate if first")
+            print("There is no consensus fprint calculated, generate if first")
         else:
             return self.fprintConsensus
 

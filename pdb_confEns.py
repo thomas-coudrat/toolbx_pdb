@@ -22,6 +22,9 @@ def main():
     ens.makeFprints(customFprint)
     ens.makeConsensusSeq()
 
+    #if plotFprint:
+    ens.plotFprints(customFprint)
+
     if dendro:
         ens.makeTanimoto(os.path.basename(templatePath))
         ens.printDendrogram('jaccard')
