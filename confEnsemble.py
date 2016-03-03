@@ -11,6 +11,7 @@ from scipy import cluster
 import matplotlib.pyplot as plt
 import PCA
 import numpy as np
+import math
 
 
 class ConfEnsemble:
@@ -324,12 +325,15 @@ class ConfEnsemble:
 
     def makeConsensusSeq(self):
         '''
-        Get a consensus sequence of residues in all self.conformations that
-        have a contact with the ligand
+        Get the combination sequence of residues in all
+        self.conformations that have a contact with the ligand
         '''
 
         consensusTemp = []
 
+        # Extract a temporary list of all residues that make a contact with
+        # the ligand, in any complex. Check by residueNumber_residueName, thus
+        # storing only a single instance of each.
         for confName in self.conformations:
             # Get the dictionary of that conf
             conformationDict = self.conformations[confName]
@@ -338,12 +342,16 @@ class ConfEnsemble:
             # Get the fprint list
             fprintList = conformationDict['fprint'].getFprint()
 
+            #print(resList)
+
             for res, fprint in zip(resList, fprintList):
                 if "1" in fprint and res not in consensusTemp:
                     consensusTemp.append(res)
 
         # Not essential to have it sorted, but do it anyway
         consensusTemp.sort()
+
+        print(consensusTemp)
 
         # Get the length of a residue fprint, and create a residue blank fprint
         fprintLen = len(fprint)
@@ -406,7 +414,7 @@ class ConfEnsemble:
             print(",".join(resList))
             print(",".join(fprintList) + "\n")
 
-    def plotFprints(self, fprintDef="111111111111"):
+    def plotFprints(self, pdb_dir, fprintDef="111111111111"):
         """
         Plot a graph representation of interaction fingerprints
         """
@@ -439,7 +447,9 @@ class ConfEnsemble:
 
         # Get the conformations fprints
         fprintList = []
-        sortedConfNames = sorted(self.conformations.keys())
+        # Get the conformation list in descending order, when building the
+        # figure that gets them ordered in ascending order
+        sortedConfNames = sorted(self.conformations.keys(), reverse=True)
         for confName in sortedConfNames:
             # Get the dictionary of that conf
             conformationDict = self.conformations[confName]
@@ -458,7 +468,7 @@ class ConfEnsemble:
 
         # Create the figure
         dpiVal = 800
-        fig = plt.figure(figsize=(res_number/2,confCount*1), dpi=dpiVal)
+        fig = plt.figure(figsize=(res_number/2, confCount), dpi=dpiVal)
         ax = fig.add_subplot(111)
 
         # Remove all but the squares
@@ -469,8 +479,12 @@ class ConfEnsemble:
         ax.tick_params(left="off", top="off", bottom="off", right="off",
                        labelbottom='off', labelleft='off')
 
+        # Create a set of spacers to be used to build the figure
         spacerX = 1
-        spacerY = 0.0002
+        # funky spacer calculation so that it gets calculated as a function of
+        # the number of comformations
+        spacerY = (1 - math.log(confCount, 10)) / 5000
+
         for y, (fp, conf_name) in enumerate(zip(fprintList, sortedConfNames)):
             # Generate default fprint X and Y values positions
             # (X values get modified in the for loop)
@@ -478,7 +492,7 @@ class ConfEnsemble:
             y_pos = np.array([y*spacerY] * fp_length)
 
             # Write conformation names in front of each fprint scatter
-            ax.text(-30, y_pos[y], conf_name.replace(".pdb",""), size=8)
+            ax.text(-30, y_pos[0], conf_name.replace(".pdb",""), size=4)
 
             # Loop over each fprint section representing a residue
             for i, (fp_segment, resName) in enumerate(zip(fp, resList)):
@@ -503,7 +517,7 @@ class ConfEnsemble:
                 if y == 0:
                     ax.text(i * (fp_length + spacerX) + (fp_length/2 - spacerX),
                             confCount * spacerY,
-                            resName.replace("_", " "), size=8, rotation=90,
+                            resName.replace("_", " "), size=4, rotation=90,
                             verticalalignment="bottom",
                             family="monospace")
 
@@ -512,7 +526,7 @@ class ConfEnsemble:
         #ax.set_ylim([-1 * spacerY, confCount * spacerY])
 
         # Save the figure in pdf format
-        plt.savefig("ifp.pdf", bbox_inches="tight", format="pdf", dpi=dpiVal)
+        plt.savefig(pdb_dir + "/ifp.pdf", bbox_inches="tight", format="pdf", dpi=dpiVal)
 
     def printFprintsConsensus(self):
         '''

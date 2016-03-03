@@ -23,7 +23,7 @@ def main():
     ens.makeConsensusSeq()
 
     #if plotFprint:
-    ens.plotFprints(customFprint)
+    ens.plotFprints(ensDir, customFprint)
 
     if dendro:
         ens.makeTanimoto(os.path.basename(templatePath))
