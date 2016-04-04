@@ -342,16 +342,9 @@ class ConfEnsemble:
             # Get the fprint list
             fprintList = conformationDict['fprint'].getFprint()
 
-            #print(resList)
-
             for res, fprint in zip(resList, fprintList):
                 if "1" in fprint and res not in consensusTemp:
                     consensusTemp.append(res)
-
-        # Not essential to have it sorted, but do it anyway
-        consensusTemp.sort()
-
-        print(consensusTemp)
 
         # Get the length of a residue fprint, and create a residue blank fprint
         fprintLen = len(fprint)
@@ -372,7 +365,8 @@ class ConfEnsemble:
 
             fprintConsensus = []
             for res, fprint in zip(resListSorted, fprintList):
-                if res in consensusTemp:
+                res_num = res.split("_")[0]
+                if res_num in [x.split("_")[0] for x in consensusTemp]:
                     if "1" in fprint:
                         fprintConsensus.append(fprint)
                     else:
@@ -526,7 +520,10 @@ class ConfEnsemble:
         #ax.set_ylim([-1 * spacerY, confCount * spacerY])
 
         # Save the figure in pdf format
-        plt.savefig(pdb_dir + "/ifp.pdf", bbox_inches="tight", format="pdf", dpi=dpiVal)
+        plt.savefig(pdb_dir + "/ifp.pdf",
+                    bbox_inches="tight",
+                    format="pdf",
+                    dpi=dpiVal)
 
     def printFprintsConsensus(self):
         '''
@@ -543,5 +540,5 @@ class ConfEnsemble:
 
             # Print the data
             print(confName)
-            #print(",".join(resList))
+            print(",".join(resList))
             print(",".join(fprintList))
