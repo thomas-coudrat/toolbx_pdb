@@ -535,10 +535,12 @@ class ConfEnsemble:
             conformationDict = self.conformations[confName]
             # Get the residue list
             resList = conformationDict['complex'].getResiduesConsensus()
+            # Get the ligand name in the complex
+            ligObjs = conformationDict['complex'].getLigand()
             # Get the fprint list
             fprintList = conformationDict['fprint'].getFprintConsensus()
 
             # Print the data
-            print(confName)
+            print(confName, ligObjs[0].GetTitle())
             print(",".join(resList))
             print(",".join(fprintList))
