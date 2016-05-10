@@ -37,7 +37,7 @@ def main():
 
     print("\nSuperimposing " + str(len(pdbPaths)) +
           " confs from dir: " + pdbDir)
-    print("Template used for superimposition: " + templatePath)
+    print("\nTemplate used for superimposition: " + templatePath + "\n")
 
     # Run the superimposition, using an ICM script
     superimpose(templatePath, pdbPaths, pdbDir, icm, script)
@@ -76,26 +76,18 @@ def getPaths():
     Figure the paths to the ICM executable and the ICM superimpose script
     """
 
-    # This Json file stores the ICM executable locations for each platform
-    pathExecutable = os.path.dirname(os.path.realpath(__file__))
-    hostFiles_json = pathExecutable + "/hostFiles.json"
+    # Get the directory path where this Python script was executed
+    pathExec = os.path.dirname(os.path.realpath(__file__))
+    # The ICM script is located in that directory
+    script = pathExec + "/super.icm"
 
-    # Read content of .json file
-    with open(hostFiles_json, "r") as jsonFile:
-        hostFiles_dict = json.load(jsonFile)
+    icmHome = os.environ.get('ICMHOME')
 
-    # Get the hostname
-    hostname = socket.gethostname()
-
-    # Verify that the current hostname is present in the config file loaded from
-    # json
-    if hostname in hostFiles_dict.keys():
-        icm = hostFiles_dict[hostname][0]
-        script = hostFiles_dict[hostname][1]
-    else:
-        print("Error: hostname " + hostname + " filepaths not configured in" +
-              " ./hostFiles.json")
+    if icmHome == None:
+        "The ICMHOME environment variable must be set for your system. Exiting."
         sys.exit()
+    else:
+        icm = icmHome + "/icm64"
 
     return icm, script
 

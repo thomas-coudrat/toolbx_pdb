@@ -1,7 +1,0 @@
-{
-  "linux-T1650": ["/home/thomas/bin/icm-3.8.3/icm64", "/home/thomas/Git/toolbx_pdb/super.icm"],
-  "Ideapad": ["/home/thomas/bin/icm-3.8-0/icm64", ""],
-  "barcoo": ["/vlsci/VR0024/tcoudrat/bin/icm-3.7-3b/icm64", "/vlsci/VR0024/tcoudrat/Scripts/toolbx_pdb/super.icm"],
-  "msgln4.its.monash.edu.au": ["/nfs/home/hpcpharm/tcoudrat/bin/icm-3.7-3b/icm64", "/nfs/home/hpcpharm/tcoudrat/Scripts/toolbx_pdb/super.icm"],
-  "msgln6.its.monash.edu.au": ["/nfs/home/hpcpharm/tcoudrat/bin/icm-3.7-3b/icm64", "/nfs/home/hpcpharm/tcoudrat/Scripts/toolbx_pdb/super.icm"]
-}
