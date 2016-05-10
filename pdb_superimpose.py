@@ -81,8 +81,10 @@ def getPaths():
     # The ICM script is located in that directory
     script = pathExec + "/super.icm"
 
+    # Get environment variable. It returns None if not defined on the system.
     icmHome = os.environ.get('ICMHOME')
 
+    # Return path to executable if the environment variable was found
     if icmHome == None:
         "The ICMHOME environment variable must be set for your system. Exiting."
         sys.exit()
