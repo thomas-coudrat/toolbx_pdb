@@ -45,8 +45,14 @@ class Principal_component_analysis:
             conformationDict = self.conformations[confName]
             confPath = conformationDict['path']
 
+            # Get the consensus residue list
+            resList = conformationDict['complex'].getResiduesConsensus()
+            # Generate the list of residues and format numbering to match that
+            # of the .pdb files to which it gets compared
+            resNumbers = [x.split("_")[0].lstrip("0") for x in resList]
+
             # Get the coords from that .pdb file
-            confCoords = self.getPDBcoord(confPath)
+            confCoords = self.getPDBcoord(confPath, resNumbers)
             # print confCoords
             # Add this conformation's coordinates to the master array
             allConfCoords.append(confCoords)
@@ -55,7 +61,7 @@ class Principal_component_analysis:
         # self.pcaCoordsArray
         self.pcaCoordsArray = np.array(allConfCoords)
 
-    def getPDBcoord(self, pdbPath):
+    def getPDBcoord(self, pdbPath, resNumbers):
         """
         Get a pdbPath, read that .pdb, and store the C-alpha data for that
         conformation
@@ -70,11 +76,11 @@ class Principal_component_analysis:
         for line in pdbLines:
             ll = line.split()
             if len(ll) > 1:
-                # In the ATOM description line
+                # Check only lines that contain the ATOM description line
                 if ll[0] == 'ATOM':
-                    # Get all the C-alphas, and make sure of the alignment
-                    # (in case there is no chain name)
-                    if ll[2] == 'CA':
+                    # Check that the current residue is within the list of
+                    # consensus residues. Only get all the C-alphas
+                    if ll[5] in resNumbers and ll[2] == 'CA':
                         # If a residue list was provided, upon creation of the
                         # PCA instance, use it to select which residue
                         # coordinates to be saved
@@ -131,7 +137,7 @@ class Principal_component_analysis:
 
     def plotPCAfig(self, var_to_plot, labels, dim):
         """
-        After the coords onto which apply PCA have beend extracted and stored
+        After the coords onto which apply PCA have been extracted and stored
         in self.pcaCoordsArray, and..
         After the variables data have been extracted and stored in
         self.vars_all_data
@@ -140,7 +146,20 @@ class Principal_component_analysis:
         be displayed
         """
         if self.pcaCoordsArray is not None:
-            print(self.pcaCoordsArray)
+
+            # Verify that conformations have the same number of coordinates
+            if not all([x.size == self.pcaCoordsArray[0].size
+                       for x in self.pcaCoordsArray]):
+                print("Conformations submitted for PCA do not have the same "\
+                      "number of coordinates. Exiting")
+                sys.exit()
+
+            # Verify that coordinates files are not empty
+            if all([x.size == 0 for x in self.pcaCoordsArray]):
+                print("No coordinates were passed to the PCA plotting function")
+                sys.exit()
+
+            # Calculate PCA
             pca = PCA(n_components=dim)
             X_r = pca.fit(self.pcaCoordsArray).transform(self.pcaCoordsArray)
             # print X_r
@@ -171,7 +190,11 @@ class Principal_component_analysis:
                         self.pcaSubplot(X_r, dim, varData, var_to_plot,
                                         pc_labels, labels, fig3D, 111)
 
-                    plt.show()
+                    # Save the figure in svg format
+                    plt.savefig("PCA.svg",
+                                bbox_inches="tight",
+                                format="svg",
+                                dpi=800)
                 else:
                     print("The variable required is not in the loaded set")
             else:

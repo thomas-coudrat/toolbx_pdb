@@ -13,33 +13,54 @@ def main():
 
     ensDir, templatePath, top, dendro, pca, pcaLabel, customFprint = parsing()
 
+    # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
 
+    #-----------------------------------------
+    # Generate interaction fingerprints (IFP)
+    #-----------------------------------------
+
+    # Add the template, this will add it to the list of complexes for the IFPs
     if templatePath:
         ens.addTemplate(templatePath)
-
+    # Generate molecular complexes (receptor/ligand)
     ens.makeComplexes()
+    # Generate the interaction fingerprints
     ens.makeFprints(customFprint)
+    # Generate a consensus sequence of residues among all conformations
     ens.makeConsensusSeq()
-
-    #if plotFprint:
-    ens.plotFprints(ensDir, customFprint)
-
-    if dendro:
-        ens.makeTanimoto(os.path.basename(templatePath))
-        ens.printDendrogram('jaccard')
-        # ens.printDendrogram('rogerstanimoto')
-
+    # Save figure of interaction fingerprints representation
+    if customFprint:
+        ens.plotFprints(ensDir, customFprint)
+    else:
+        ens.plotFprints(ensDir)
+    # Print out IFPs
     # ens.printFprints()
     ens.printFprintsConsensus()
 
-    if pca:
-        ens.makePCA("tanimoto")
-        ens.plotPCA("tanimoto", dim=2)
+    #------------------------------
+    # Optional: Dendrogram and PCA
+    #------------------------------
 
-    if pcaLabel:
-        ens.makePCA("tanimoto")
-        ens.plotPCA("tanimoto", dim=2, labelType="all")
+    # Display dendrogram
+    if dendro:
+        ens.printDendrogram('jaccard')
+        # ens.printDendrogram('rogerstanimoto')
+
+    # Display PCA score (with or without labels)
+    if (pca or pcaLabel):
+        if templatePath:
+            # Calculating tanimoto comparisons is required for the PCA score
+            ens.makeTanimoto(os.path.basename(templatePath))
+            ens.makePCA("tanimoto")
+            if pca:
+                ens.plotPCA("tanimoto", dim=2)
+            elif pcaLabel:
+                ens.plotPCA("tanimoto", dim=2, labelType="all")
+        else:
+            print("\nPCA not calculated: provide a template for " \
+                  "tanimoto comparisons")
+            sys.exit()
 
 
 def parsing():

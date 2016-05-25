@@ -57,10 +57,10 @@ class ConfEnsemble:
     def makePCA(self, var_to_plot=None, residues=None):
         '''
         Initiate the creation of a PCA object, that will get the PCA for the
-        conformation ensemble
-        'residues' is a string containing the residues to be included in the
-        PCA. Consider the whole sequence if residues=None
+        conformation ensemble 'residues' is a string containing the residues to
+        be included in the PCA. Consider the whole sequence if residues=None
         '''
+
         if residues is not None:
             l_resList = residues.split(",")
             for i, res in enumerate(l_resList):
@@ -68,6 +68,10 @@ class ConfEnsemble:
         else:
             l_resList = None
 
+        #print(self.conformations)
+        #print(l_resList)
+
+        # Create PCA instance
         self.PCA = PCA.Principal_component_analysis(self.conformations,
                                                     l_resList)
         self.PCA.makePCAcoords()
@@ -157,10 +161,10 @@ class ConfEnsemble:
                 # Store this coef
                 conformationDict['tanimoto'] = tanimotoCoef
 
-            print("Tanimoto coefficients were calculated using template:" +
+            print("\nTanimoto coefficients were calculated using template:" +
                   templateName)
         else:
-            print("This template was not found for tanimoto calculations" +
+            print("\nThis template was not found for tanimoto calculations" +
                   templateName)
 
     def tanimoto(self, fprintListA, fprintListB):
@@ -519,10 +523,10 @@ class ConfEnsemble:
         ax.set_xlim([-20, len(fp) * (fp_length + spacerX)])
         #ax.set_ylim([-1 * spacerY, confCount * spacerY])
 
-        # Save the figure in pdf format
-        plt.savefig(pdb_dir + "/ifp.pdf",
+        # Save the figure in svg format
+        plt.savefig(pdb_dir + "/ifp.svg",
                     bbox_inches="tight",
-                    format="pdf",
+                    format="svg",
                     dpi=dpiVal)
 
     def printFprintsConsensus(self):
