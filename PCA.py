@@ -215,7 +215,7 @@ class Principal_component_analysis:
         if dim == 2:
             ax = fig.add_subplot(position)
             scat = ax.scatter(X_r[:, 0], X_r[:, 1],
-                              c=varData, marker="o", lw=0)  # cmap=plt.cm.hot
+                              c=varData, marker="o", lw=0, cmap=plt.cm.viridis)
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
                 ax.annotate(label, xy=(x, y), fontsize=10,
                             ha='left', va='bottom')
@@ -225,7 +225,8 @@ class Principal_component_analysis:
         if dim == 3:
             ax = fig.add_subplot(position, projection='3d')
             scat = Axes3D.scatter(ax, X_r[:, 0], X_r[:, 1], X_r[:, 2],
-                                  c=varData, marker="o", lw=0)
+                                  c=varData, marker="o", lw=0,
+                                  cmap=plt.cm.viridis)
             for label, x, y, z in zip(labels, X_r[:, 0], X_r[:, 1], X_r[:, 2]):
                 if label != "":
                     x2D, y2D, _ = proj3d.proj_transform(x, y, z, ax.get_proj())
