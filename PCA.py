@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import proj3d
+import sys
 
 
 class Principal_component_analysis:
@@ -75,12 +76,24 @@ class Principal_component_analysis:
         confCoords = []
         for line in pdbLines:
             ll = line.split()
-            if len(ll) > 1:
+            colCount = len(ll)
+            if colCount > 1:
                 # Check only lines that contain the ATOM description line
                 if ll[0] == 'ATOM':
+                    # If chain name is present, it shifts all columns. Checking
+                    # total number of columns to know which column contains
+                    # residue number
+                    if colCount == 12:
+                        resCol = 5
+                    elif colCount == 11:
+                        resCol = 4
+                    else:
+                        print("Unrecognized pdb format, check number of " \
+                              "columns. Exiting.")
+                        sys.exit()
                     # Check that the current residue is within the list of
                     # consensus residues. Only get all the C-alphas
-                    if ll[5] in resNumbers and ll[2] == 'CA':
+                    if ll[resCol] in resNumbers and ll[2] == 'CA':
                         # If a residue list was provided, upon creation of the
                         # PCA instance, use it to select which residue
                         # coordinates to be saved
@@ -151,12 +164,13 @@ class Principal_component_analysis:
             if not all([x.size == self.pcaCoordsArray[0].size
                        for x in self.pcaCoordsArray]):
                 print("Conformations submitted for PCA do not have the same "\
-                      "number of coordinates. Exiting")
+                      "number of coordinates. Exiting.")
                 sys.exit()
 
             # Verify that coordinates files are not empty
             if all([x.size == 0 for x in self.pcaCoordsArray]):
-                print("No coordinates were passed to the PCA plotting function")
+                print("No coordinates were passed to the PCA plotting " \
+                      "function. Exiting.")
                 sys.exit()
 
             # Calculate PCA
@@ -165,9 +179,13 @@ class Principal_component_analysis:
             # print X_r
 
             # Percentage of variance explained for each components
-            print('explained variance ratio (first ' + str(dim) +
+            print('Explained variance ratio (first ' + str(dim) +
                   ' components): %s' % str(pca.explained_variance_ratio_))
-            pc_labels = pca.explained_variance_ratio_
+            # Round PC values for plotting
+            round_val = 2
+            PCs_round = [round(100 * pc, round_val)
+                         for pc in pca.explained_variance_ratio_]
+            print("PCs rounded at {} decimals: ".format(round_val), PCs_round)
 
             # print X_r[:, 0]
             # print X_r[:, 1]
@@ -178,17 +196,17 @@ class Principal_component_analysis:
                     # Get the variable data
                     varData = self.vars_data[var_to_plot]
                     if dim == 2:
-                        fig2D = plt.figure()
+                        fig2D = plt.figure(figsize=(17, 13), dpi=100)
                         fig2D.set_facecolor('white')
                         fig2D.canvas.set_window_title("PCA 2D")
                         self.pcaSubplot(X_r, dim, varData, var_to_plot,
-                                        pc_labels, labels, fig2D, 111)
+                                        PCs_round, labels, fig2D, 111)
                     if dim == 3:
                         fig3D = plt.figure()
                         fig3D.set_facecolor('white')
                         fig3D.canvas.set_window_title("PCA 3D")
                         self.pcaSubplot(X_r, dim, varData, var_to_plot,
-                                        pc_labels, labels, fig3D, 111)
+                                        PCs_round, labels, fig3D, 111)
 
                     # Save the figure in svg format
                     plt.savefig("PCA.svg",
@@ -204,39 +222,51 @@ class Principal_component_analysis:
             print("The coords onto which apply the PCA have to be extracted")
             print("First run Principal_component_analysis.makePCAvars()")
 
-    def pcaSubplot(self, X_r, dim, varData, varName, pc_labels, labels, fig,
+    def pcaSubplot(self, X_r, dim, varData, varName, PCs_round, labels, fig,
                    position):
         """
         Get the Principal Component Analysis data for this set of coordinates
         The value of 'dim' specifies the number of dimensions to diplay
         Then plot the PCA data
         """
+
+        # Set some figure parameters
+        plt.rcParams['xtick.major.pad'] = '8'
+        plt.rcParams['ytick.major.pad'] = '8'
+
         # Choose dimention
         if dim == 2:
             ax = fig.add_subplot(position)
-            scat = ax.scatter(X_r[:, 0], X_r[:, 1],
-                              c=varData, marker="o", lw=0, cmap=plt.cm.viridis)
+            scat = ax.scatter(X_r[:, 0], X_r[:, 1], c=varData,
+                              s=400, marker="o",
+                              cmap=plt.cm.viridis)
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
-                ax.annotate(label, xy=(x, y), fontsize=10,
-                            ha='left', va='bottom')
-            ax.set_xlabel("PC1 (%.3f)" % pc_labels[0])
-            ax.set_ylabel("PC2 (%.3f)" % pc_labels[1])
+                ax.annotate(label, xy=(x, y + 0.04), fontsize=30,
+                            ha='center', va='bottom')
+            ax.set_xlabel("PC1 (" + '{}'.format(PCs_round[0]) + " %)",
+                          fontsize=30)
+            ax.set_ylabel("PC2 (" + '{}'.format(PCs_round[1]) + " %)",
+                          fontsize=30)
+            ax.tick_params(axis="both", which="major", labelsize=25)
             # plt.title('PCA-2D ' + varName)
         if dim == 3:
             ax = fig.add_subplot(position, projection='3d')
             scat = Axes3D.scatter(ax, X_r[:, 0], X_r[:, 1], X_r[:, 2],
-                                  c=varData, marker="o", lw=0,
+                                  c=varData, s=400, marker="o",
                                   cmap=plt.cm.viridis)
             for label, x, y, z in zip(labels, X_r[:, 0], X_r[:, 1], X_r[:, 2]):
                 if label != "":
                     x2D, y2D, _ = proj3d.proj_transform(x, y, z, ax.get_proj())
-                    ax.annotate(label, xy=(x2D, y2D), fontsize=10,
+                    ax.annotate(label, xy=(x2D, y2D), fontsize=30,
                                 ha='left', va='bottom')
-            ax.set_xlabel("PC1 (%.3f)" % pc_labels[0])
-            ax.set_ylabel("PC2 (%.3f)" % pc_labels[1])
-            ax.set_zlabel("PC3 (%.3f)" % pc_labels[2])
+            ax.set_xlabel("PC1 (" + '{0:g}'.format(PCs_round[0]) + " %)")
+            ax.set_ylabel("PC2 (" + '{0:g}'.format(PCs_round[1]) + " %)")
+            ax.set_zlabel("PC3 (" + '{0:g}'.format(PCs_round[2]) + " %)")
+            ax.tick_params(axis="both", which="major", labelsize=20)
             # plt.title('PCA-3D ' + varName)
+
         # Plot the colorbar refering to the variable coloring the conformation
         # dots
         cb = plt.colorbar(scat)
-        cb.set_label(varName)
+        cb.set_label(varName, size=30)
+        cb.ax.tick_params(labelsize=25)
