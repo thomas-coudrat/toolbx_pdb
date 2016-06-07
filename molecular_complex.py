@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from openeye import oechem
+from openeye import oechem #, oemolbase
 import os
 
 
@@ -63,19 +63,22 @@ class Complex:
                         resTitle = resNumber + "_" + molName
 
                         # Setup the information to store for this residue
-                        residue = self.createMolecule(mol, resTitle)
+                        if molName == "ASP":
+                            residue = self.createMolecule(mol, resTitle, verbose=True)
+                        else:
+                            residue = self.createMolecule(mol, resTitle)
                         resRings = RingAnalysis(residue).ringsData
                         # Store the information
                         #print resTitle
                         self.residues[resTitle] = [residue, resRings, True]
                     else:
                         # What to store for the ligand
-                        ligand = self.createMolecule(mol, molName)
+                        ligand = self.createMolecule(mol, molName, verbose=True)
                         ligandRings = RingAnalysis(ligand).ringsData
                         # Store it
                         self.ligand = [ligand, ligandRings]
 
-    def createMolecule(self, mol, molTitle):
+    def createMolecule(self, mol, molTitle, verbose=False):
         '''
         Get a OE residue, return a OE molecule
         '''
@@ -87,16 +90,44 @@ class Complex:
         for atom in mol.GetAtoms():
             newMol.NewAtom(atom)
 
-        # Recreate bonding in molecule
+        #---------------------------------------------#
+        # Recreate the molecule from atom coordinates #
+        #---------------------------------------------#
+
+        # Set the 3D dimension
+        #oechem.OESetDimensionFromCoords(newMol)
+        # Determine the connectivity between every atom, and assign bond order
         oechem.OEDetermineConnectivity(newMol)
         oechem.OEFindRingAtomsAndBonds(newMol)
-        oechem.OEAssignAromaticFlags(newMol,
-                                     oechem.OEAroModelOpenEye)
         oechem.OEPerceiveBondOrders(newMol)
-        oechem.OEAddExplicitHydrogens(newMol)
+        # Determine rings
+
+        #oechem.OEAssignAromaticFlags(newMol, oechem.OEAroModelOpenEye)
+        # Set hydrogens
         oechem.OEAssignImplicitHydrogens(newMol)
+        #oechem.OEAddExplicitHydrogens(newMol)
+        # Set charge
         oechem.OEAssignFormalCharges(newMol)
-        oechem.OEAssignBondiVdWRadii(newMol)
+
+        """
+        OEDetermineConnectivity(mol)
+        OEFindRingAtomsAndBonds(mol)
+        OEPerceiveBondOrders(mol)
+        OEAssignImplicitHydrogens(mol)
+        OEAssignFormalCharges(mol)
+        """
+
+
+        if verbose:
+            print("\nMolecule name: {}\n".format(molTitle))
+            for atom in newMol.GetAtoms():
+                print(atom, atom.GetFormalCharge())
+            ofs = oechem.oemolostream()
+            if (ofs.open("test_{}.mol2".format(molTitle)) == 1):
+                oechem.OEWriteMolecule(ofs, newMol)
+
+        # Set atom radius
+        #oechem.OEAssignBondiVdWRadii(newMol)
         #oechem.OEAssignPartialCharges(newMol,
         #                              oechem.OECharges_None,
         #                              False,

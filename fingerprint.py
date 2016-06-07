@@ -132,7 +132,6 @@ class Fingerprint:
         '''
         Return the consensus fprint
         '''
-
         if len(self.fprintConsensus) == 0:
             print("There is no consensus fprint calculated, generate if first")
         else:
@@ -381,10 +380,8 @@ class Fingerprint:
                     for atomB in matchB.GetTargetAtoms():
 
                         # Check distance between those atoms
-                        dist = oechem.OEGetDistance(molA,
-                                                    atomA,
-                                                    molB,
-                                                    atomB)
+                        dist = oechem.OEGetDistance(molA, atomA,
+                                                    molB, atomB)
 
                         if dist <= distCutoff:
                             return "1"
