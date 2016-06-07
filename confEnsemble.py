@@ -9,6 +9,7 @@ import numpy
 from scipy import spatial
 from scipy import cluster
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import PCA
 import numpy as np
 import math
@@ -31,6 +32,10 @@ class ConfEnsemble:
         '''
         Create a Conformations instance, with a directory path
         '''
+
+        # Get matplotlib to save SVG text as text, not paths
+        mpl.rcParams['svg.fonttype'] = 'none'
+
         self.confDir = confDir
         confPaths = glob.glob(self.confDir + "/*.pdb")
         self.conformations = {}
@@ -197,11 +202,14 @@ class ConfEnsemble:
 
         return 1 - round(tanimoto, 4)
 
-    def printDendrogram(self, metric):
+    def printDendrogram(self, metric, dendroThresh=0.5):
         '''
         Print a dendrogram based on the conensus fprints stored in
         self.conformations
         '''
+
+        print("\nGenerating dendrogram of conformations based on IFPs")
+        print("Dendrogram threshold = {}\n".format(dendroThresh))
 
         # Temporarly store all the fprintCharStrings in this list
         fprintSpacedList = []
@@ -229,6 +237,7 @@ class ConfEnsemble:
         # Create a concatenation of the spaced fprints
         fprintConcatenate = " ; ".join(fprintSpacedList)
 
+        #---------------------------
         # Creation of the dendrogram
         #---------------------------
 
@@ -242,21 +251,42 @@ class ConfEnsemble:
 
         # Building the hierachical clustering using the nearest point algo
         Z = cluster.hierarchy.linkage(Y, 'complete')
-        # other options are: single, complete, weighted, average
+        # Clustering options are: single, complete, weighted, average
+
+        # Setting parameters that cannot be modified via the SciPy API
+        # This could be improved by using the matplotlib API via axes.
+        mpl.rcParams['lines.linewidth'] = 5
+        # Create the figure + axes
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
         # Representation of the heirachical clustering in the form of a tree
-        plt.figure()
-        dendro = cluster.hierarchy.dendrogram(Z,
-                                              color_threshold=0.5,
-                                              orientation='right')
+        dendro = cluster.hierarchy.dendrogram(Z, ax=ax,
+                                              color_threshold=dendroThresh,
+                                              labels=confNamesList,
+                                              leaf_font_size=15,
+                                              orientation='left')
 
-        # Adding the names of the conformations to the dendrogram before
-        # showing it
-        for i, pos in enumerate(dendro['ivl']):
-                dendro['ivl'][int(i)] = confNamesList[int(pos)]
+        # Add a vertical line for the threshold
+        plt.axvline(dendroThresh, linewidth=3,
+                    color='grey', linestyle="dashed")
+        #plt.text(s=str(dendroThresh), x=dendroThresh, y=0.25,
+        #         color="grey", fontsize=15, rotation="vertical")
+        #plt.xticks(list(plt.xticks()[0]) + [dendroThresh])
+        #plt.xticks([dendroThresh], [str(dendroThresh)], color="grey")
 
-        # Display the dendrogram
-        plt.show()
+        # Changing figure style
+        ax.tick_params(axis="x", which="major", labelsize=30)
+        ax.spines['top'].set_color('none')
+        ax.spines['left'].set_color('none')
+        ax.spines['right'].set_color('none')
+        ax.xaxis.set_ticks_position('bottom')
+
+        # Save the figure in svg format
+        plt.savefig("Dendro.svg", bbox_inches="tight")
+
+        # Resetting parameters
+        mpl.rcParams['lines.linewidth'] = 1
 
     def plotSortedEnsemble(self, val):
         """
@@ -527,14 +557,12 @@ class ConfEnsemble:
         #ax.set_ylim([-1 * spacerY, confCount * spacerY])
 
         # Save the figure in svg format
-        plt.savefig(pdb_dir + "/ifp.svg",
+        plt.savefig("IFP.svg",
                     bbox_inches="tight",
-                    format="svg",
                     dpi=dpiVal)
         # Save the figure in pdf format
-        plt.savefig(pdb_dir + "/ifp.pdf",
+        plt.savefig("IFP.pdf",
                     bbox_inches="tight",
-                    format="pdf",
                     dpi=dpiVal)
 
     def printFprintsConsensus(self):

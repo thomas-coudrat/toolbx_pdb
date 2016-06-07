@@ -11,7 +11,7 @@ def main():
     Run this script
     """
 
-    ensDir, templatePath, top, dendro, pca, pcaLabels, customFprint = parsing()
+    ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint = parsing()
 
     # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
@@ -44,8 +44,11 @@ def main():
 
     # Display dendrogram
     if dendro:
-        ens.printDendrogram('jaccard')
-        # ens.printDendrogram('rogerstanimoto')
+        if dendroThresh:
+            ens.printDendrogram('jaccard', dendroThresh)
+            # ens.printDendrogram('rogerstanimoto')
+        else:
+            ens.printDendrogram('jaccard')
 
     # Display PCA score (with or without labels)
     if pca:
@@ -77,6 +80,7 @@ def parsing():
     descr_top = "Select only the top X conformations from that " \
         "directory (optional)"
     descr_dendro = "Print-out a dendrogram of the conformations IFPs"
+    descr_dendroThresh = "Threshold to color the dendrogram. Value 0 < x < 1."
     descr_pca = "Print-out a PCA graph of the binding pocket conformations"
     descr_pcaLabel = "List pdb conformations to be labelled in PCA plot. " \
         "Format: conformation1.pdb,conformation4.pdb"
@@ -99,19 +103,44 @@ def parsing():
     parser.add_argument("-templatePath", help=descr_templatePath)
     parser.add_argument("--top", help=descr_top)
     parser.add_argument("-dendro", action="store_true", help=descr_dendro)
+    parser.add_argument("--dendroThresh", help=descr_dendroThresh)
     parser.add_argument("-pca", action="store_true", help=descr_pca)
     parser.add_argument("--pcaLabels", help=descr_pcaLabel)
     parser.add_argument("-customFprint", help=descr_customFprint)
     args = parser.parse_args()
+
+    #-----------------------------
     # Assign each variable parsed
+    #-----------------------------
+
     ensDir = args.ensDir
+
     templatePath = args.templatePath
+
     if args.top:
         top = int(args.top)
     else:
         top = None
+
     dendro = args.dendro
+
+    if args.dendroThresh:
+        # Make sure that the threshold value is a float
+        try:
+            dendroThresh = float(args.dendroThresh)
+        except ValueError:
+            print("Dendrogram threshold should be a float/int")
+        # Make sure that the threshold value submitted is between 0 and 1
+        if 0.0 <= dendroThresh <= 1.0:
+            pass
+        else:
+            print("Dendrogram threshold must have numerical value 0 < x < 1")
+            sys.exit()
+    else:
+        dendroThresh = False
+
     pca = args.pca
+
     if args.pcaLabels:
         pcaLabels = args.pcaLabels.split(",")
         if not all([x[-4:] == (".pdb") for x in pcaLabels]) and not pcaLabels[0] == "all" :
@@ -119,8 +148,9 @@ def parsing():
             sys.exit()
     else:
         pcaLabels = None
-    customFprint = args.customFprint
-    if customFprint:
+
+    if args.customFprint:
+        customFprint = args.customFprint
         if len(customFprint) != 11:
             print("Input error: custom fprint definition has to be 11 bits long")
             sys.exit()
@@ -128,7 +158,7 @@ def parsing():
             print("Input error: custom fprint definition uses only '0' and/or '1'")
             sys.exit()
 
-    return ensDir, templatePath, top, dendro, pca, pcaLabels, customFprint
+    return ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint
 
 
 def writeCommand():
@@ -139,7 +169,7 @@ def writeCommand():
     """
 
     cwd = os.getcwd()
-    logFile = open("PCA_command.sh", "w")
+    logFile = open("pdbConfEns_cmd.sh", "w")
     # Write the directory location: this is not executed upong sh call of
     # the thisFile.sh, but serves as information
     logFile.write(cwd + "\n")
