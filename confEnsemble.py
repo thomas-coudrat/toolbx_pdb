@@ -61,6 +61,8 @@ class ConfEnsemble:
         be included in the PCA. Consider the whole sequence if residues=None
         '''
 
+        print("Calculating PCA on the conformation ensemble")
+
         if residues is not None:
             l_resList = residues.split(",")
             for i, res in enumerate(l_resList):
@@ -78,7 +80,7 @@ class ConfEnsemble:
         if var_to_plot is not None:
             self.PCA.makePCAvars(var_to_plot)
 
-    def plotPCA(self, var_to_plot, dim, labelType="template"):
+    def plotPCA(self, var_to_plot, dim, pcaLabels=None):
         """
         Print or write plots for the PCA data loaded. Run this after
         self.makePCA has been ran.
@@ -86,19 +88,22 @@ class ConfEnsemble:
         if self.PCA is not None:
             # Create a labels list, with the name of the template only
             sortedConfNames = sorted(self.conformations.keys())
+
             labels = []
             for confName in sortedConfNames:
-                if labelType == "template":
-                    if confName in self.templates:
+                if confName in self.templates:
+                    labels.append(confName.replace(".pdb", ""))
+                elif pcaLabels:
+                    # Display all labels if "all" is found
+                    if pcaLabels[0] == "all":
                         labels.append(confName.replace(".pdb", ""))
+                    # Otherwise, display only the labels in that list
+                    elif confName in pcaLabels:
+                        labels.append(confName.replace(".pdb", ""))
+                    # Store an empty string where nothing should be displayed
                     else:
                         labels.append("")
-                elif labelType == "all":
-                    labels.append(confName.replace(".pdb", ""))
-                else:
-                    print("This is not a recognised 'labelType' option to " +
-                          "plot the PCA coordinates:" + labelType)
-                    sys.exit()
+
             # Call the plotPCAfig method
             self.PCA.plotPCAfig(var_to_plot, labels, dim)
         else:
@@ -161,11 +166,9 @@ class ConfEnsemble:
                 # Store this coef
                 conformationDict['tanimoto'] = tanimotoCoef
 
-            print("\nTanimoto coefficients were calculated using template:" +
-                  templateName)
+            print("\nTanimoto coefficients calculated with template: {}\n".format(templateName))
         else:
-            print("\nThis template was not found for tanimoto calculations" +
-                  templateName)
+            print("\nTemplate not found for tanimoto calculations: {}\n".format(templateName))
 
     def tanimoto(self, fprintListA, fprintListB):
         '''
@@ -527,6 +530,11 @@ class ConfEnsemble:
         plt.savefig(pdb_dir + "/ifp.svg",
                     bbox_inches="tight",
                     format="svg",
+                    dpi=dpiVal)
+        # Save the figure in pdf format
+        plt.savefig(pdb_dir + "/ifp.pdf",
+                    bbox_inches="tight",
+                    format="pdf",
                     dpi=dpiVal)
 
     def printFprintsConsensus(self):

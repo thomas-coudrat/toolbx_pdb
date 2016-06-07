@@ -11,7 +11,7 @@ def main():
     Run this script
     """
 
-    ensDir, templatePath, top, dendro, pca, pcaLabel, customFprint = parsing()
+    ensDir, templatePath, top, dendro, pca, pcaLabels, customFprint = parsing()
 
     # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
@@ -48,19 +48,21 @@ def main():
         # ens.printDendrogram('rogerstanimoto')
 
     # Display PCA score (with or without labels)
-    if (pca or pcaLabel):
+    if pca:
         if templatePath:
             # Calculating tanimoto comparisons is required for the PCA score
             ens.makeTanimoto(os.path.basename(templatePath))
             ens.makePCA("tanimoto")
-            if pca:
+            if pcaLabels:
+                ens.plotPCA("tanimoto", dim=2, pcaLabels=pcaLabels)
+            else:
                 ens.plotPCA("tanimoto", dim=2)
-            elif pcaLabel:
-                ens.plotPCA("tanimoto", dim=2, labelType="all")
         else:
             print("\nPCA not calculated: provide a template for " \
                   "tanimoto comparisons")
             sys.exit()
+
+    writeCommand()
 
 
 def parsing():
@@ -76,8 +78,8 @@ def parsing():
         "directory (optional)"
     descr_dendro = "Print-out a dendrogram of the conformations IFPs"
     descr_pca = "Print-out a PCA graph of the binding pocket conformations"
-    descr_pcaLabel = "Print-out a PCA graph of the binding pocket " \
-        "conformations (including labels on all conformations)"
+    descr_pcaLabel = "List pdb conformations to be labelled in PCA plot. " \
+        "Format: conformation1.pdb,conformation4.pdb"
     descr_customFprint = "Provide a custom interaction fingerprint " \
         "description of 11 bits (value 0 or 1), to inactivate or activate " \
         "of the following IFP descriptiors (in that order): " \
@@ -98,7 +100,7 @@ def parsing():
     parser.add_argument("--top", help=descr_top)
     parser.add_argument("-dendro", action="store_true", help=descr_dendro)
     parser.add_argument("-pca", action="store_true", help=descr_pca)
-    parser.add_argument("-pcaLabel", action="store_true", help=descr_pcaLabel)
+    parser.add_argument("--pcaLabels", help=descr_pcaLabel)
     parser.add_argument("-customFprint", help=descr_customFprint)
     args = parser.parse_args()
     # Assign each variable parsed
@@ -110,7 +112,13 @@ def parsing():
         top = None
     dendro = args.dendro
     pca = args.pca
-    pcaLabel = args.pcaLabel
+    if args.pcaLabels:
+        pcaLabels = args.pcaLabels.split(",")
+        if not all([x[-4:] == (".pdb") for x in pcaLabels]) and not pcaLabels[0] == "all" :
+            print("PCA label must be .pdb conformations. Exiting.")
+            sys.exit()
+    else:
+        pcaLabels = None
     customFprint = args.customFprint
     if customFprint:
         if len(customFprint) != 11:
@@ -120,7 +128,34 @@ def parsing():
             print("Input error: custom fprint definition uses only '0' and/or '1'")
             sys.exit()
 
-    return ensDir, templatePath, top, dendro, pca, pcaLabel, customFprint
+    return ensDir, templatePath, top, dendro, pca, pcaLabels, customFprint
+
+
+def writeCommand():
+    """
+    Write down the command that was used to exectute this script in a .sh
+    file, at the location where the script is executed. Also write the
+    current working directory at the time of execution
+    """
+
+    cwd = os.getcwd()
+    logFile = open("PCA_command.sh", "w")
+    # Write the directory location: this is not executed upong sh call of
+    # the thisFile.sh, but serves as information
+    logFile.write(cwd + "\n")
+    logFile.write(sys.argv[0].split("/")[-1] + " ")
+    for arg in sys.argv[1:]:
+        if len(arg) > 0:
+            # Deal with argument options (starting with '-')
+            if arg[0] == "-":
+                logFile.write(arg + " ")
+            # Do not add "'" on argument if it already has them
+            elif arg[0] == "'" and arg[-1] == "'":
+                logFile.write(arg + " ")
+            # Add the "'" around each other argument
+            else:
+                logFile.write("'" + arg + "' ")
+    logFile.close()
 
 
 if __name__ == "__main__":
