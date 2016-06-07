@@ -54,13 +54,23 @@ class Principal_component_analysis:
 
             # Get the coords from that .pdb file
             confCoords = self.getPDBcoord(confPath, resNumbers)
-            # print confCoords
+
             # Add this conformation's coordinates to the master array
             allConfCoords.append(confCoords)
 
         # Create an array with this data, and store it in the variable
         # self.pcaCoordsArray
         self.pcaCoordsArray = np.array(allConfCoords)
+
+        # Check that each element in the array (protein conformation) is of then
+        # same length (contains the same features ie alpha carbon coordinates)
+        if not all([len(x) == len(self.pcaCoordsArray[0])
+                    for x in self.pcaCoordsArray]):
+            print("\nNumber of coordinates not identical amongst conformations")
+            for confName, coords in zip(sortedConfNames, self.pcaCoordsArray):
+                print(confName, "\t", len(coords))
+            print("Exiting.")
+            sys.exit()
 
     def getPDBcoord(self, pdbPath, resNumbers):
         """
@@ -80,12 +90,13 @@ class Principal_component_analysis:
             if colCount > 1:
                 # Check only lines that contain the ATOM description line
                 if ll[0] == 'ATOM':
-                    # If chain name is present, it shifts all columns. Checking
-                    # total number of columns to know which column contains
-                    # residue number
-                    if colCount == 12:
+                    # If element at position 4 is alphabet, then the pdb files
+                    # has a chain name, find the residue column in position 5.
+                    # Otherwise, if position 4 is digit, that is the residue
+                    # column (no chain name in that pdb)
+                    if ll[4].isalpha():
                         resCol = 5
-                    elif colCount == 11:
+                    elif ll[4].isdigit():
                         resCol = 4
                     else:
                         print("Unrecognized pdb format, check number of " \
