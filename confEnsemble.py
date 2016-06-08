@@ -85,7 +85,7 @@ class ConfEnsemble:
         if var_to_plot is not None:
             self.PCA.makePCAvars(var_to_plot)
 
-    def plotPCA(self, var_to_plot, dim, pcaLabels=None):
+    def plotPCA(self, projName, var_to_plot, dim, pcaLabels=None):
         """
         Print or write plots for the PCA data loaded. Run this after
         self.makePCA has been ran.
@@ -110,7 +110,7 @@ class ConfEnsemble:
                         labels.append("")
 
             # Call the plotPCAfig method
-            self.PCA.plotPCAfig(var_to_plot, labels, dim)
+            self.PCA.plotPCAfig(projName, var_to_plot, labels, dim)
         else:
             print("You first have to create a PCA object with the function")
             print("Use the function confEnsemble.makePCA()")
@@ -215,7 +215,7 @@ class ConfEnsemble:
 
         return 1 - round(tanimoto, 4)
 
-    def printDendrogram(self, metric, dendroThresh=0.5):
+    def printDendrogram(self, projName, metric, dendroThresh=0.5):
         '''
         Print a dendrogram based on the conensus fprints stored in
         self.conformations
@@ -296,7 +296,7 @@ class ConfEnsemble:
         ax.xaxis.set_ticks_position('bottom')
 
         # Save the figure in svg format
-        plt.savefig("Dendro.svg", bbox_inches="tight")
+        plt.savefig(projName + "_Dendro.svg", bbox_inches="tight")
 
         # Resetting parameters
         mpl.rcParams['lines.linewidth'] = 1
@@ -350,7 +350,7 @@ class ConfEnsemble:
             conformationDict['complex'] = molComplex
             print("Mol-complex: " + str(i + 1) + "/" + str(total))
 
-    def makeFprints(self, fprintDef=False):
+    def makeFprints(self, fprintDef=None):
         '''
         Initiate the creation of fprints for all the conformations stored in
         self.conformations dictionary
@@ -458,7 +458,7 @@ class ConfEnsemble:
             print(",".join(resList))
             print(",".join(fprintList) + "\n")
 
-    def plotFprints(self, pdb_dir, fprintDef="111111111111"):
+    def plotFprints(self, projName, pdb_dir, fprintDef="111111111111"):
         """
         Plot a graph representation of interaction fingerprints
         """
@@ -570,7 +570,7 @@ class ConfEnsemble:
         #ax.set_ylim([-1 * spacerY, confCount * spacerY])
 
         # Save the figure in svg format
-        plt.savefig("IFP.svg",
+        plt.savefig(projName + "_IFP.svg",
                     bbox_inches="tight",
                     dpi=dpiVal)
         # Save the figure in pdf format

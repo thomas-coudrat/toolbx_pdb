@@ -159,7 +159,7 @@ class Principal_component_analysis:
                 confVar = conformationDict[varName]
                 self.vars_data[varName].append(confVar)
 
-    def plotPCAfig(self, var_to_plot, labels, dim):
+    def plotPCAfig(self, projName, var_to_plot, labels, dim):
         """
         After the coords onto which apply PCA have been extracted and stored
         in self.pcaCoordsArray, and..
@@ -226,10 +226,7 @@ class Principal_component_analysis:
                                         PCs_round, labels, fig3D, 111)
 
                     # Save the figure in svg format
-                    plt.savefig("PCA.svg",
-                                bbox_inches="tight",
-                                format="svg",
-                                dpi=800)
+                    plt.savefig(projName + "_PCA.svg", bbox_inches="tight")
                 else:
                     print("The variable required is not in the loaded set")
             else:

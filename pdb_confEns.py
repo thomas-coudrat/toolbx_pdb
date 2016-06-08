@@ -11,7 +11,7 @@ def main():
     Run this script
     """
 
-    ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint = parsing()
+    projName, ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint = parsing()
 
     # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
@@ -31,9 +31,9 @@ def main():
     ens.makeConsensusSeq()
     # Save figure of interaction fingerprints representation
     if customFprint:
-        ens.plotFprints(ensDir, customFprint)
+        ens.plotFprints(projName, ensDir, customFprint)
     else:
-        ens.plotFprints(ensDir)
+        ens.plotFprints(projName, ensDir)
     # Print out IFPs
     # ens.printFprints()
     ens.printFprintsConsensus()
@@ -45,11 +45,11 @@ def main():
     # Display dendrogram
     if dendro:
         if dendroThresh:
-            ens.printDendrogram('jaccard', dendroThresh)
+            ens.printDendrogram(projName, 'jaccard', dendroThresh)
             # Other metric that could be used:
             #ens.printDendrogram('rogerstanimoto', dendroThresh)
         else:
-            ens.printDendrogram('jaccard')
+            ens.printDendrogram(projName, 'jaccard')
 
     # Display PCA score (with or without labels)
     if pca:
@@ -58,15 +58,15 @@ def main():
             ens.computeDistances(os.path.basename(templatePath), "jaccard")
             ens.makePCA("jaccard")
             if pcaLabels:
-                ens.plotPCA("jaccard", dim=2, pcaLabels=pcaLabels)
+                ens.plotPCA(projName, "jaccard", dim=2, pcaLabels=pcaLabels)
             else:
-                ens.plotPCA("jaccard", dim=2)
+                ens.plotPCA(projName, "jaccard", dim=2)
         else:
             print("\nPCA not calculated: provide a template for " \
                   "tanimoto comparisons")
             sys.exit()
 
-    writeCommand()
+    writeCommand(projName)
 
 
 def parsing():
@@ -75,6 +75,7 @@ def parsing():
     """
 
     descr = "This script executes commands on a protein conformation ensemble"
+    descr_projName = "Provide a project name. Format: string"
     descr_ensDir = "Path to the directory containing the .pdb files"
     descr_templatePath = "Path to the template that will be used to do " \
         "tanimoto comparisons on the interaction fingerprints"
@@ -100,6 +101,7 @@ def parsing():
         "[Pi (res) x Cation (lig)] " \
         "[Acceptor (res) x Metal (lig)]"
     parser = argparse.ArgumentParser(description=descr)
+    parser.add_argument("projName", help=descr_projName)
     parser.add_argument("ensDir", help=descr_ensDir)
     parser.add_argument("-templatePath", help=descr_templatePath)
     parser.add_argument("--top", help=descr_top)
@@ -113,6 +115,8 @@ def parsing():
     #-----------------------------
     # Assign each variable parsed
     #-----------------------------
+
+    projName = args.projName.replace(" ", "_")
 
     ensDir = args.ensDir
 
@@ -158,11 +162,13 @@ def parsing():
         if len(customFprint.replace("0", "").replace("1", "")) != 0:
             print("Input error: custom fprint definition uses only '0' and/or '1'")
             sys.exit()
+    else:
+        customFprint = None
 
-    return ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint
+    return projName, ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint
 
 
-def writeCommand():
+def writeCommand(projName):
     """
     Write down the command that was used to exectute this script in a .sh
     file, at the location where the script is executed. Also write the
@@ -170,7 +176,7 @@ def writeCommand():
     """
 
     cwd = os.getcwd()
-    logFile = open("confEns_cmd.sh", "w")
+    logFile = open(projName + "_CMD.sh", "w")
     # Write the directory location: this is not executed upong sh call of
     # the thisFile.sh, but serves as information
     logFile.write(cwd + "\n")
