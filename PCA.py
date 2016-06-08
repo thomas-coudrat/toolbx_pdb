@@ -206,17 +206,23 @@ class Principal_component_analysis:
                 if var_to_plot in self.vars_data.keys():
                     # Get the variable data
                     varData = self.vars_data[var_to_plot]
+                    if var_to_plot == "tanimoto":
+                        var_axis = "Tanimoto coefficient"
+                    elif var_to_plot == "jaccard":
+                        var_axis = "Jaccard distance"
+                    else:
+                        var_axis = var_to_plot
                     if dim == 2:
                         fig2D = plt.figure(figsize=(17, 13), dpi=100)
                         fig2D.set_facecolor('white')
                         fig2D.canvas.set_window_title("PCA 2D")
-                        self.pcaSubplot(X_r, dim, varData, var_to_plot,
+                        self.pcaSubplot(X_r, dim, varData, var_axis,
                                         PCs_round, labels, fig2D, 111)
                     if dim == 3:
                         fig3D = plt.figure()
                         fig3D.set_facecolor('white')
                         fig3D.canvas.set_window_title("PCA 3D")
-                        self.pcaSubplot(X_r, dim, varData, var_to_plot,
+                        self.pcaSubplot(X_r, dim, varData, var_axis,
                                         PCs_round, labels, fig3D, 111)
 
                     # Save the figure in svg format

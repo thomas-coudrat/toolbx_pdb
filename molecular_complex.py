@@ -97,8 +97,7 @@ class Complex:
         # Version 0.1 procedure
         oechem.OEDetermineConnectivity(newMol)
         oechem.OEFindRingAtomsAndBonds(newMol)
-        oechem.OEAssignAromaticFlags(newMol,
-                                     oechem.OEAroModelOpenEye)
+        oechem.OEAssignAromaticFlags(newMol, oechem.OEAroModelOpenEye)
         oechem.OEPerceiveBondOrders(newMol)
         oechem.OEAddExplicitHydrogens(newMol)
         oechem.OEAssignImplicitHydrogens(newMol)

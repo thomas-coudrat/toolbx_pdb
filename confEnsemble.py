@@ -141,7 +141,7 @@ class ConfEnsemble:
             conformationDict = self.conformations[confName]
             conformationDict['fake'] = 0
 
-    def makeTanimoto(self, templateName):
+    def computeDistances(self, templateName, metric):
         '''
         Calculate tanimoto coefficient between the chosen template
         (templatePos) and each of the conformations stored in
@@ -165,15 +165,28 @@ class ConfEnsemble:
                 # Get the fprint list
                 fprintList = conformationDict['fprint'].getFprintConsensus()
 
-                # Calculate the Tanimoto coef between those two fprints
-                tanimotoCoef = self.tanimoto(templateFprintList, fprintList)
+                # Compare two fprints using the tanimoto coefficient
+                if metric == "tanimoto":
+                    tanimotoCoef = self.tanimoto(templateFprintList, fprintList)
+                    # Store this coef
+                    conformationDict['tanimoto'] = tanimotoCoef
+                # Calculate Jaccard distance between two fprints
+                elif metric == "jaccard":
+                    template_vect = np.array(list("".join(templateFprintList))).astype(bool)
+                    fprint_vect = np.array(list("".join(fprintList))).astype(bool)
+                    jaccardDist = spatial.distance.jaccard(template_vect,
+                                                           fprint_vect)
+                    #print(template_vect, templateName)
+                    #print(fprint_vect, confName)
+                    #print(jaccardDist, "\n")
+                    conformationDict['jaccard'] = jaccardDist
 
-                # Store this coef
-                conformationDict['tanimoto'] = tanimotoCoef
-
-            print("\nTanimoto coefficients calculated with template: {}\n".format(templateName))
+            print("\nIFP distances to template: {} " \
+                  "were computed using metric: {}\n".format(templateName,
+                                                           metric))
         else:
-            print("\nTemplate not found for tanimoto calculations: {}\n".format(templateName))
+            print("\nTemplate not found for " \
+                  "computing distance: {}\n".format(templateName))
 
     def tanimoto(self, fprintListA, fprintListB):
         '''
@@ -276,7 +289,7 @@ class ConfEnsemble:
         #plt.xticks([dendroThresh], [str(dendroThresh)], color="grey")
 
         # Changing figure style
-        ax.tick_params(axis="x", which="major", labelsize=30)
+        ax.tick_params(axis="x", which="major", labelsize=20)
         ax.spines['top'].set_color('none')
         ax.spines['left'].set_color('none')
         ax.spines['right'].set_color('none')
@@ -561,9 +574,9 @@ class ConfEnsemble:
                     bbox_inches="tight",
                     dpi=dpiVal)
         # Save the figure in pdf format
-        plt.savefig("IFP.pdf",
-                    bbox_inches="tight",
-                    dpi=dpiVal)
+        #plt.savefig("IFP.pdf",
+        #            bbox_inches="tight",
+        #            dpi=dpiVal)
 
     def printFprintsConsensus(self):
         '''

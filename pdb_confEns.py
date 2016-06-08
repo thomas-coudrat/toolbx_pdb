@@ -46,7 +46,8 @@ def main():
     if dendro:
         if dendroThresh:
             ens.printDendrogram('jaccard', dendroThresh)
-            # ens.printDendrogram('rogerstanimoto')
+            # Other metric that could be used:
+            #ens.printDendrogram('rogerstanimoto', dendroThresh)
         else:
             ens.printDendrogram('jaccard')
 
@@ -54,12 +55,12 @@ def main():
     if pca:
         if templatePath:
             # Calculating tanimoto comparisons is required for the PCA score
-            ens.makeTanimoto(os.path.basename(templatePath))
-            ens.makePCA("tanimoto")
+            ens.computeDistances(os.path.basename(templatePath), "jaccard")
+            ens.makePCA("jaccard")
             if pcaLabels:
-                ens.plotPCA("tanimoto", dim=2, pcaLabels=pcaLabels)
+                ens.plotPCA("jaccard", dim=2, pcaLabels=pcaLabels)
             else:
-                ens.plotPCA("tanimoto", dim=2)
+                ens.plotPCA("jaccard", dim=2)
         else:
             print("\nPCA not calculated: provide a template for " \
                   "tanimoto comparisons")
@@ -169,7 +170,7 @@ def writeCommand():
     """
 
     cwd = os.getcwd()
-    logFile = open("pdbConfEns_cmd.sh", "w")
+    logFile = open("confEns_cmd.sh", "w")
     # Write the directory location: this is not executed upong sh call of
     # the thisFile.sh, but serves as information
     logFile.write(cwd + "\n")
