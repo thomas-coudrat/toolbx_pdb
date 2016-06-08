@@ -11,7 +11,7 @@ def main():
     Run this script
     """
 
-    projName, ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint = parsing()
+    projName, ensDir, templatePath, top, dendro, dendroThresh, pca, confLabels, customFprint = parsing()
 
     # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
@@ -30,10 +30,7 @@ def main():
     # Generate a consensus sequence of residues among all conformations
     ens.makeConsensusSeq()
     # Save figure of interaction fingerprints representation
-    if customFprint:
-        ens.plotFprints(projName, ensDir, customFprint)
-    else:
-        ens.plotFprints(projName, ensDir)
+    ens.plotFprints(projName, ensDir, customFprint)
     # Print out IFPs
     # ens.printFprints()
     ens.printFprintsConsensus()
@@ -44,26 +41,18 @@ def main():
 
     # Display dendrogram
     if dendro:
-        if dendroThresh:
-            ens.printDendrogram(projName, 'jaccard', dendroThresh)
-            # Other metric that could be used:
-            #ens.printDendrogram('rogerstanimoto', dendroThresh)
-        else:
-            ens.printDendrogram(projName, 'jaccard')
+        ens.printDendrogram(projName, 'jaccard', dendroThresh, confLabels)
 
     # Display PCA score (with or without labels)
     if pca:
         if templatePath:
-            # Calculating tanimoto comparisons is required for the PCA score
+            # Calculating jaccard distances is required for the PCA score
             ens.computeDistances(os.path.basename(templatePath), "jaccard")
             ens.makePCA("jaccard")
-            if pcaLabels:
-                ens.plotPCA(projName, "jaccard", dim=2, pcaLabels=pcaLabels)
-            else:
-                ens.plotPCA(projName, "jaccard", dim=2)
+            ens.plotPCA(projName, "jaccard", dim=2, confLabels=confLabels)
         else:
             print("\nPCA not calculated: provide a template for " \
-                  "tanimoto comparisons")
+                  "distance comparisons")
             sys.exit()
 
     writeCommand(projName)
@@ -84,8 +73,8 @@ def parsing():
     descr_dendro = "Print-out a dendrogram of the conformations IFPs"
     descr_dendroThresh = "Threshold to color the dendrogram. Value 0 < x < 1."
     descr_pca = "Print-out a PCA graph of the binding pocket conformations"
-    descr_pcaLabel = "List pdb conformations to be labelled in PCA plot. " \
-        "Format: conformation1.pdb,conformation4.pdb"
+    descr_confLabel = "List pdb conformations to be identified in PCA and " \
+        "Dendrogram plots. Format: conformation1.pdb,conformation4.pdb"
     descr_customFprint = "Provide a custom interaction fingerprint " \
         "description of 11 bits (value 0 or 1), to inactivate or activate " \
         "of the following IFP descriptiors (in that order): " \
@@ -108,7 +97,7 @@ def parsing():
     parser.add_argument("-dendro", action="store_true", help=descr_dendro)
     parser.add_argument("--dendroThresh", help=descr_dendroThresh)
     parser.add_argument("-pca", action="store_true", help=descr_pca)
-    parser.add_argument("--pcaLabels", help=descr_pcaLabel)
+    parser.add_argument("--confLabels", help=descr_confLabel)
     parser.add_argument("-customFprint", help=descr_customFprint)
     args = parser.parse_args()
 
@@ -142,17 +131,17 @@ def parsing():
             print("Dendrogram threshold must have numerical value 0 < x < 1")
             sys.exit()
     else:
-        dendroThresh = False
+        dendroThresh = None
 
     pca = args.pca
 
-    if args.pcaLabels:
-        pcaLabels = args.pcaLabels.split(",")
-        if not all([x[-4:] == (".pdb") for x in pcaLabels]) and not pcaLabels[0] == "all" :
-            print("PCA label must be .pdb conformations. Exiting.")
+    if args.confLabels:
+        confLabels = args.confLabels.split(",")
+        if not all([x[-4:] == (".pdb") for x in confLabels]) and not confLabels[0] == "all" :
+            print("Conformation label(s) must be .pdb conformations. Exiting.")
             sys.exit()
     else:
-        pcaLabels = None
+        confLabels = None
 
     if args.customFprint:
         customFprint = args.customFprint
@@ -165,7 +154,7 @@ def parsing():
     else:
         customFprint = None
 
-    return projName, ensDir, templatePath, top, dendro, dendroThresh, pca, pcaLabels, customFprint
+    return projName, ensDir, templatePath, top, dendro, dendroThresh, pca, confLabels, customFprint
 
 
 def writeCommand(projName):

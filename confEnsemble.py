@@ -85,7 +85,7 @@ class ConfEnsemble:
         if var_to_plot is not None:
             self.PCA.makePCAvars(var_to_plot)
 
-    def plotPCA(self, projName, var_to_plot, dim, pcaLabels=None):
+    def plotPCA(self, projName, var_to_plot, dim, confLabels):
         """
         Print or write plots for the PCA data loaded. Run this after
         self.makePCA has been ran.
@@ -93,17 +93,20 @@ class ConfEnsemble:
         if self.PCA is not None:
             # Create a labels list, with the name of the template only
             sortedConfNames = sorted(self.conformations.keys())
-
+            # This variable will store labels to be used on the PCA score
             labels = []
+            # Loop over conformation names
             for confName in sortedConfNames:
+                # If that conformation is the template, add it to the labels
                 if confName in self.templates:
                     labels.append(confName.replace(".pdb", ""))
-                elif pcaLabels:
-                    # Display all labels if "all" is found
-                    if pcaLabels[0] == "all":
+                # Otherwise, check if labels were provided as argument
+                elif confLabels is not None:
+                    # Display every labels if "all" is found
+                    if confLabels[0] == "all":
                         labels.append(confName.replace(".pdb", ""))
                     # Otherwise, display only the labels in that list
-                    elif confName in pcaLabels:
+                    elif confName in confLabels:
                         labels.append(confName.replace(".pdb", ""))
                     # Store an empty string where nothing should be displayed
                     else:
@@ -215,11 +218,15 @@ class ConfEnsemble:
 
         return 1 - round(tanimoto, 4)
 
-    def printDendrogram(self, projName, metric, dendroThresh=0.5):
+    def printDendrogram(self, projName, metric, dendroThresh, confLabels):
         '''
         Print a dendrogram based on the conensus fprints stored in
         self.conformations
         '''
+        # If no dendrogram threshold was provided (None), default to a 0.5
+        # threshold
+        if dendroThresh == None:
+            dendroThresh = 0.5
 
         print("\nGenerating dendrogram of conformations based on IFPs")
         print("Dendrogram threshold = {}\n".format(dendroThresh))
@@ -228,20 +235,30 @@ class ConfEnsemble:
         fprintSpacedList = []
         confNamesList = []
 
-        # Get all the fprints stored in self.conformations
+        # Get all the fprints stored in self.conformations and modify
+        # conformation names, ready for the figure
         for confName in self.conformations:
+            #--------------------
+            # Conformation names
+            #--------------------
+            # Prettify new name
+            newConfName = confName.replace("_", " ").replace(".pdb", "").upper()
+            # If conformation labels were provided, label them with *
+            if confLabels is not None:
+                if confName in confLabels:
+                    newConfName = newConfName + " *"
+            # Add all conformation "newNames" to the list
+            confNamesList.append(newConfName)
 
-            # Keep the conformation names in a list, to rename the dendrogram
-            # later
-            confNamesList.append(confName)
-
+            #-------------
+            # Fingerprint
+            #-------------
             # Get the dictionary of that conf
             conformationDict = self.conformations[confName]
             # Get the fprint list
             fprintList = conformationDict['fprint'].getFprintConsensus()
             # Create a fprint string
             fprintString = "".join(fprintList)
-
             # Insert a space between each of the bits in that new string
             fprintCharList = list(fprintString)
             fprintSpaced = " ".join(fprintCharList)
@@ -260,7 +277,6 @@ class ConfEnsemble:
 
         # calculate the tanimoto coef into a matrix
         Y = spatial.distance.pdist(X, metric)
-        # Here a custom tanimoto function could be used
 
         # Building the hierachical clustering using the nearest point algo
         Z = cluster.hierarchy.linkage(Y, 'complete')
@@ -458,10 +474,14 @@ class ConfEnsemble:
             print(",".join(resList))
             print(",".join(fprintList) + "\n")
 
-    def plotFprints(self, projName, pdb_dir, fprintDef="111111111111"):
+    def plotFprints(self, projName, pdb_dir, fprintDef):
         """
         Plot a graph representation of interaction fingerprints
         """
+        # If no custom fingerprint was provided (None), then default to using
+        # full featured interaction fingerprints
+        if fprintDef == None:
+            fprintDef = "111111111111"
 
         # Color definition for the full fprint definition
         c_hydroph = "blue"
