@@ -161,8 +161,7 @@ class ConfEnsemble:
             # Calculate the tanimoto coef between the chosen template and each
             # of their fprints, then store that coef in the conformationDict
             # with a new 'tanimoto' key
-            for confName in self.conformations:
-
+            for confName in sorted(self.conformations.keys()):
                 # Get the dictionary of that conf
                 conformationDict = self.conformations[confName]
                 # Get the fprint list
@@ -237,7 +236,7 @@ class ConfEnsemble:
 
         # Get all the fprints stored in self.conformations and modify
         # conformation names, ready for the figure
-        for confName in self.conformations:
+        for confName in sorted(self.conformations.keys()):
             #--------------------
             # Conformation names
             #--------------------
@@ -260,6 +259,7 @@ class ConfEnsemble:
             # Create a fprint string
             fprintString = "".join(fprintList)
             # Insert a space between each of the bits in that new string
+            #fprintSpacedList.append(list(fprintString).astype(bool))
             fprintCharList = list(fprintString)
             fprintSpaced = " ".join(fprintCharList)
             fprintSpacedList.append(fprintSpaced)
@@ -273,7 +273,7 @@ class ConfEnsemble:
 
         # Create an array with the fprint concatenate
         mat = numpy.matrix(fprintConcatenate)
-        X = numpy.asarray(mat)
+        X = numpy.asarray(mat) #.astype(bool)
 
         # calculate the tanimoto coef into a matrix
         Y = spatial.distance.pdist(X, metric)
@@ -294,7 +294,8 @@ class ConfEnsemble:
                                               color_threshold=dendroThresh,
                                               labels=confNamesList,
                                               leaf_font_size=15,
-                                              orientation='left')
+                                              orientation='left',
+                                              above_threshold_color='black')
 
         # Add a vertical line for the threshold
         plt.axvline(dendroThresh, linewidth=3,
@@ -311,8 +312,9 @@ class ConfEnsemble:
         ax.spines['right'].set_color('none')
         ax.xaxis.set_ticks_position('bottom')
 
-        # Save the figure in svg format
+        # Save the figure in svg format and png for quick visualization
         plt.savefig(projName + "_Dendro.svg", bbox_inches="tight")
+        plt.savefig(projName + "_Dendro.png", bbox_inches="tight")
 
         # Resetting parameters
         mpl.rcParams['lines.linewidth'] = 1
@@ -589,14 +591,9 @@ class ConfEnsemble:
         ax.set_xlim([-20, len(fp) * (fp_length + spacerX)])
         #ax.set_ylim([-1 * spacerY, confCount * spacerY])
 
-        # Save the figure in svg format
-        plt.savefig(projName + "_IFP.svg",
-                    bbox_inches="tight",
-                    dpi=dpiVal)
-        # Save the figure in pdf format
-        #plt.savefig("IFP.pdf",
-        #            bbox_inches="tight",
-        #            dpi=dpiVal)
+        # Save the figure in svg format and png for quick visualization
+        plt.savefig(projName + "_IFP.svg", bbox_inches="tight")
+        plt.savefig(projName + "_IFP.png", bbox_inches="tight")
 
     def printFprintsConsensus(self):
         '''

@@ -225,8 +225,10 @@ class Principal_component_analysis:
                         self.pcaSubplot(X_r, dim, varData, var_axis,
                                         PCs_round, labels, fig3D, 111)
 
-                    # Save the figure in svg format
+                    # Save the figure in svg format (and png for quick
+                    # visualization)
                     plt.savefig(projName + "_PCA.svg", bbox_inches="tight")
+                    plt.savefig(projName + "_PCA.png", bbox_inches="tight")
                 else:
                     print("The variable required is not in the loaded set")
             else:
@@ -253,7 +255,8 @@ class Principal_component_analysis:
             ax = fig.add_subplot(position)
             scat = ax.scatter(X_r[:, 0], X_r[:, 1], c=varData,
                               s=400, marker="o",
-                              cmap=plt.cm.viridis)
+                              cmap=plt.cm.viridis,
+                              vmin=0.0, vmax=1.0)
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
                 ax.annotate(label, xy=(x, y + 0.04), fontsize=30,
                             ha='center', va='bottom')
@@ -267,7 +270,8 @@ class Principal_component_analysis:
             ax = fig.add_subplot(position, projection='3d')
             scat = Axes3D.scatter(ax, X_r[:, 0], X_r[:, 1], X_r[:, 2],
                                   c=varData, s=400, marker="o",
-                                  cmap=plt.cm.viridis)
+                                  cmap=plt.cm.viridis,
+                                  vmin=0.0, vmax=1.0)
             for label, x, y, z in zip(labels, X_r[:, 0], X_r[:, 1], X_r[:, 2]):
                 if label != "":
                     x2D, y2D, _ = proj3d.proj_transform(x, y, z, ax.get_proj())
