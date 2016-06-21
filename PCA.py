@@ -159,7 +159,7 @@ class Principal_component_analysis:
                 confVar = conformationDict[varName]
                 self.vars_data[varName].append(confVar)
 
-    def plotPCAfig(self, projName, var_to_plot, labels, dim):
+    def plotPCAfig(self, projName, var_to_plot, labels, dim, templates):
         """
         After the coords onto which apply PCA have been extracted and stored
         in self.pcaCoordsArray, and..
@@ -217,13 +217,13 @@ class Principal_component_analysis:
                         fig2D.set_facecolor('white')
                         fig2D.canvas.set_window_title("PCA 2D")
                         self.pcaSubplot(X_r, dim, varData, var_axis,
-                                        PCs_round, labels, fig2D, 111)
+                                        PCs_round, labels, fig2D, 111, templates)
                     if dim == 3:
                         fig3D = plt.figure()
                         fig3D.set_facecolor('white')
                         fig3D.canvas.set_window_title("PCA 3D")
                         self.pcaSubplot(X_r, dim, varData, var_axis,
-                                        PCs_round, labels, fig3D, 111)
+                                        PCs_round, labels, fig3D, 111, templates)
 
                     # Save the figure in svg format (and png for quick
                     # visualization)
@@ -239,7 +239,7 @@ class Principal_component_analysis:
             print("First run Principal_component_analysis.makePCAvars()")
 
     def pcaSubplot(self, X_r, dim, varData, varName, PCs_round, labels, fig,
-                   position):
+                   position, template_list):
         """
         Get the Principal Component Analysis data for this set of coordinates
         The value of 'dim' specifies the number of dimensions to diplay
@@ -250,38 +250,74 @@ class Principal_component_analysis:
         plt.rcParams['xtick.major.pad'] = '8'
         plt.rcParams['ytick.major.pad'] = '8'
 
-        # Choose dimention
+        # Divide up the data to plot into general conformations and templates.
+        # The colormap data is not used for the templates, and a different
+        # marker is used.
+        templatePosition = []
+        confData = []
+        confPosition = []
+        for l, d, x in zip(labels, varData, X_r):
+            if l in template_list:
+                templatePosition.append(x)
+            else:
+                confData.append(d)
+                confPosition.append(x)
+        templatePosition = np.array(templatePosition)
+        confPosition = np.array(confPosition)
+
+        # Plot either PCA data on 2D or 3D
         if dim == 2:
             ax = fig.add_subplot(position)
-            scat = ax.scatter(X_r[:, 0], X_r[:, 1], c=varData,
-                              s=400, marker="o",
+
+            # Scatter conformations. Designated by circles, colored based on
+            # IFP similarity to a defined template
+            scat = ax.scatter(confPosition[:, 0], confPosition[:, 1],
+                              c=confData, s=600, marker="o",
                               cmap=plt.cm.viridis,
                               vmin=0.0, vmax=1.0)
+
+            # Scatter the template conformation(s). Designated by arrows.
+            ax.scatter(templatePosition[:, 0], templatePosition[:, 1],
+                       s=600, marker="v", c="black")
+
+            # Setting labels for both conformations and templates
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
-                ax.annotate(label, xy=(x, y + 0.04), fontsize=30,
+                ax.annotate(label, xy=(x, y + 0.06), fontsize=30,
                             ha='center', va='bottom')
-            ax.set_xlabel("PC1 (" + '{}'.format(PCs_round[0]) + " %)",
-                          fontsize=30)
-            ax.set_ylabel("PC2 (" + '{}'.format(PCs_round[1]) + " %)",
-                          fontsize=30)
+
+            # Setting labels and axes parameters
+            ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]), fontsize=30)
+            ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]), fontsize=30)
             ax.tick_params(axis="both", which="major", labelsize=25)
-            # plt.title('PCA-2D ' + varName)
+
         if dim == 3:
             ax = fig.add_subplot(position, projection='3d')
-            scat = Axes3D.scatter(ax, X_r[:, 0], X_r[:, 1], X_r[:, 2],
-                                  c=varData, s=400, marker="o",
+
+            # Conformations
+            scat = Axes3D.scatter(ax, confPosition[:, 0],
+                                  confPosition[:, 1],
+                                  confPosition[:, 2],
+                                  color=varData, size=600, marker="o",
                                   cmap=plt.cm.viridis,
                                   vmin=0.0, vmax=1.0)
+            # Templates
+            Axes3D.scatter(ax, templatePosition[:, 0],
+                                  templatePosition[:, 1],
+                                  templatePosition[:, 2],
+                                  color=black, size=600, marker="v")
+
+            # Scatter plot labels
             for label, x, y, z in zip(labels, X_r[:, 0], X_r[:, 1], X_r[:, 2]):
                 if label != "":
                     x2D, y2D, _ = proj3d.proj_transform(x, y, z, ax.get_proj())
                     ax.annotate(label, xy=(x2D, y2D), fontsize=30,
                                 ha='left', va='bottom')
-            ax.set_xlabel("PC1 (" + '{0:g}'.format(PCs_round[0]) + " %)")
-            ax.set_ylabel("PC2 (" + '{0:g}'.format(PCs_round[1]) + " %)")
-            ax.set_zlabel("PC3 (" + '{0:g}'.format(PCs_round[2]) + " %)")
+
+            # Axes and labels
+            ax.set_xlabel("PC1 ({} %".format(PCs_round[0]))
+            ax.set_ylabel("PC2 ({} %".format(PCs_round[1]))
+            ax.set_zlabel("PC3 ({0:g} %".format(PCs_round[2]))
             ax.tick_params(axis="both", which="major", labelsize=20)
-            # plt.title('PCA-3D ' + varName)
 
         # Plot the colorbar refering to the variable coloring the conformation
         # dots

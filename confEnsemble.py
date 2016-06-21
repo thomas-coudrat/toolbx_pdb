@@ -56,7 +56,7 @@ class ConfEnsemble:
                 confPaths = confPaths[0:topX]
 
             for confPath in confPaths:
-                confName = os.path.basename(confPath)
+                confName = os.path.basename(confPath).replace(".pdb", "").replace("_", " ").upper()
                 self.conformations[confName] = {'path': confPath}
 
     def makePCA(self, var_to_plot=None, residues=None):
@@ -99,26 +99,28 @@ class ConfEnsemble:
             for confName in sortedConfNames:
                 # If that conformation is the template, add it to the labels
                 if confName in self.templates:
-                    labels.append(confName.replace(".pdb", ""))
+                    labels.append(confName)
                 # Otherwise, check if labels were provided as argument
                 elif confLabels is not None:
                     # Display every labels if "all" is found
                     if confLabels[0] == "all":
-                        labels.append(confName.replace(".pdb", ""))
+                        labels.append(confName)
                     # Otherwise, display only the labels in that list
                     elif confName in confLabels:
-                        labels.append(confName.replace(".pdb", ""))
+                        labels.append(confName)
                     # Store an empty string where nothing should be displayed
                     else:
                         labels.append("")
 
             # Call the plotPCAfig method
-            self.PCA.plotPCAfig(projName, var_to_plot, labels, dim)
+            self.PCA.plotPCAfig(projName, var_to_plot,
+                                labels, dim, self.templates)
         else:
-            print("You first have to create a PCA object with the function")
-            print("Use the function confEnsemble.makePCA()")
+            print("Create a PCA object with the function \
+                  confEnsemble.makePCA() before plotting PCA data")
+            sys.exit()
 
-    def addTemplate(self, pdbPath):
+    def addConformation(self, pdbPath):
         '''
         Add a template .pdb file to the self.conformations path list. This
         template can be a crystal structure for example, adding it to the
@@ -126,9 +128,8 @@ class ConfEnsemble:
         and keeping track of the template structure names will help make
         comparisons (e.g.: tanimoto comparison of fprint)
         '''
-
-        if os.path.isfile(pdbPath):
-            pdbName = os.path.basename(pdbPath)
+        if os.path.isfile(pdbPath) and pdbPath[-4:] == ".pdb":
+            pdbName = os.path.basename(pdbPath).replace(".pdb", "").replace("_", " ").upper()
             self.conformations[pdbName] = {'path': pdbPath}
             self.templates.append(pdbName)
         else:
@@ -144,13 +145,16 @@ class ConfEnsemble:
             conformationDict = self.conformations[confName]
             conformationDict['fake'] = 0
 
-    def computeDistances(self, templateName, metric):
+    def computeDistances(self, templatePath, metric):
         '''
         Calculate tanimoto coefficient between the chosen template
         (templatePos) and each of the conformations stored in
         self.conformations. The tanimoto coefficient is then stored in the
         corresponding dictionaries, with the key 'tanimoto'.
         '''
+
+        # Format the template path into its name
+        templateName = os.path.basename(templatePath).replace(".pdb", "").replace("_", " ").upper()
 
         # Get the template fprint
         if templateName in self.conformations:
@@ -187,8 +191,8 @@ class ConfEnsemble:
                   "were computed using metric: {}\n".format(templateName,
                                                            metric))
         else:
-            print("\nTemplate not found for " \
-                  "computing distance: {}\n".format(templateName))
+            print("\nTemplate not found: {}\n".format(templateName))
+            sys.exit()
 
     def tanimoto(self, fprintListA, fprintListB):
         '''
@@ -593,7 +597,7 @@ class ConfEnsemble:
 
         # Save the figure in svg format and png for quick visualization
         plt.savefig(projName + "_IFP.svg", bbox_inches="tight")
-        plt.savefig(projName + "_IFP.png", bbox_inches="tight")
+        plt.savefig(projName + "_IFP.png", bbox_inches="tight", dpi=dpiVal)
 
     def printFprintsConsensus(self):
         '''

@@ -11,7 +11,8 @@ def main():
     Run this script
     """
 
-    projName, ensDir, templatePath, top, dendro, dendroThresh, pca, confLabels, customFprint = parsing()
+    projName, ensDir, templatePath, additionalPaths, \
+     top, dendro, dendroThresh, pca, confLabels, customFprint = parsing()
 
     # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
@@ -22,7 +23,10 @@ def main():
 
     # Add the template, this will add it to the list of complexes for the IFPs
     if templatePath:
-        ens.addTemplate(templatePath)
+        ens.addConformation(templatePath)
+    if additionalPaths:
+        for additionalPath in additionalPaths:
+            ens.addConformation(additionalPath)
     # Generate molecular complexes (receptor/ligand)
     ens.makeComplexes()
     # Generate the interaction fingerprints
@@ -47,7 +51,7 @@ def main():
     if pca:
         if templatePath:
             # Calculating jaccard distances is required for the PCA score
-            ens.computeDistances(os.path.basename(templatePath), "jaccard")
+            ens.computeDistances(templatePath, "jaccard")
             ens.makePCA("jaccard")
             ens.plotPCA(projName, "jaccard", dim=2, confLabels=confLabels)
         else:
@@ -68,13 +72,16 @@ def parsing():
     descr_ensDir = "Path to the directory containing the .pdb files"
     descr_templatePath = "Path to the template that will be used to do " \
         "tanimoto comparisons on the interaction fingerprints"
+    descr_additionalPaths = "Paths of additional conformations to be added " \
+        "to the conformation ensemble analysis. " \
+        "Format: path/to/conf1.pdb,path/to/conf2.pdb"
     descr_top = "Select only the top X conformations from that " \
         "directory (optional)"
     descr_dendro = "Print-out a dendrogram of the conformations IFPs"
     descr_dendroThresh = "Threshold to color the dendrogram. Value 0 < x < 1."
     descr_pca = "Print-out a PCA graph of the binding pocket conformations"
     descr_confLabel = "List pdb conformations to be identified in PCA and " \
-        "Dendrogram plots. Format: conformation1.pdb,conformation4.pdb"
+        "Dendrogram plots. Format: 'conformation 1,conformation 4'"
     descr_customFprint = "Provide a custom interaction fingerprint " \
         "description of 11 bits (value 0 or 1), to inactivate or activate " \
         "of the following IFP descriptiors (in that order): " \
@@ -93,6 +100,7 @@ def parsing():
     parser.add_argument("projName", help=descr_projName)
     parser.add_argument("ensDir", help=descr_ensDir)
     parser.add_argument("-templatePath", help=descr_templatePath)
+    parser.add_argument("-additionalPaths", help=descr_additionalPaths)
     parser.add_argument("--top", help=descr_top)
     parser.add_argument("-dendro", action="store_true", help=descr_dendro)
     parser.add_argument("--dendroThresh", help=descr_dendroThresh)
@@ -110,6 +118,14 @@ def parsing():
     ensDir = args.ensDir
 
     templatePath = args.templatePath
+
+    if args.additionalPaths:
+        additionalPaths = args.additionalPaths.split(",")
+        if not all([x[-4:] == (".pdb") for x in additionalPaths]):
+            print("Additional conformation paths must be .pdb files. Exiting.")
+            sys.exit()
+    else:
+        additionalPaths = None
 
     if args.top:
         top = int(args.top)
@@ -137,9 +153,6 @@ def parsing():
 
     if args.confLabels:
         confLabels = args.confLabels.split(",")
-        if not all([x[-4:] == (".pdb") for x in confLabels]) and not confLabels[0] == "all" :
-            print("Conformation label(s) must be .pdb conformations. Exiting.")
-            sys.exit()
     else:
         confLabels = None
 
@@ -154,7 +167,8 @@ def parsing():
     else:
         customFprint = None
 
-    return projName, ensDir, templatePath, top, dendro, dendroThresh, pca, confLabels, customFprint
+    return projName, ensDir, templatePath, additionalPaths, \
+        top, dendro, dendroThresh, pca, confLabels, customFprint
 
 
 def writeCommand(projName):
