@@ -603,7 +603,7 @@ class ConfEnsemble:
         '''
         Print the consensus fprints in self.conformations
         '''
-        for confName in self.conformations:
+        for confName in sorted(self.conformations):
 
             # Get the dictionary of that conf
             conformationDict = self.conformations[confName]

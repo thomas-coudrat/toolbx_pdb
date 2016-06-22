@@ -19,13 +19,13 @@ from os.path import basename
 from subprocess import check_output, STDOUT, CalledProcessError
 import socket
 import json
+import time
 
 
 def main():
     """
     Run the superimpose script
     """
-
     # Get arguments
     pdbDir, templatePath = parsing()
 
@@ -35,20 +35,41 @@ def main():
     # Get paths of all .pdb files in this directory
     pdbPaths = sorted(glob.glob(pdbDir + "/*.pdb"))
 
-    print("\nSuperimposing " + str(len(pdbPaths)) +
-          " confs from dir: " + pdbDir)
-    print("\nTemplate used for superimposition: " + templatePath + "\n")
+    # Print info and write log file to the directory of conformations that were
+    # superimposed
+    print_and_log(templatePath, pdbDir, pdbPaths)
 
     # Run the superimposition, using an ICM script
     superimpose(templatePath, pdbPaths, pdbDir, icm, script)
 
-    # Finally, rename the directory to notify that the contained structures
-    # were superimposed
-    if pdbDir.endswith("_super/"):
-        print("\nDirectory not renamed: structures were already superimposed")
-    else:
-        os.rename(pdbDir, pdbDir.replace("/", "_super/"))
+def print_and_log(templatePath, pdbDir, pdbPaths):
+    """
+    Write a log text file that contains the following information: time/date,
+    template and list of conformations superimposed. Also print information to
+    terminal.
+    """
+    # Print
+    print("-------------------")
+    print("## Superimposing ##")
+    print("-------------------")
+    print("\nTemplate: ")
+    print("\t" + templatePath)
+    print("\nSuperimposing " + str(len(pdbPaths)) + \
+          " conformations from directory: " + pdbDir)
 
+    # Log
+    date_str = time.strftime("%H:%M:%S")
+    time_str = time.strftime("%d/%m/%Y")
+    with open(pdbDir + "/superimposed.log", "w") as log_file:
+        log_file.write("#")
+        log_file.write("### Log of superimposed conformations\n")
+        log_file.write("#")
+        log_file.write("Date & Time: " + date_str + " -- " + time_str + "\n\n")
+        log_file.write("Template used:\n")
+        log_file.write("\t" + templatePath + "\n\n")
+        log_file.write("Conformations superimposed:\n")
+        for pdb in pdbPaths:
+            log_file.write("\t" + basename(pdb) + "\n")
 
 def parsing():
     """
@@ -126,7 +147,9 @@ def superimpose(templatePath, pdbPaths, pdbDir, icm, script):
         os.system("sed -e 's|PDB_NAME_2|" + pdbName + "|g' " +
                   tempScript + " -i")
 
-        print(pdbName)
+        # Print conformation name to terminal
+        print("\t" + pdbName)
+
         # Execute the temp script
         try:
             check_output(icm + " -s " + tempScript, stderr=STDOUT, shell=True)
@@ -137,6 +160,7 @@ def superimpose(templatePath, pdbPaths, pdbDir, icm, script):
 
         # Remove the temp script
         os.remove(tempScript)
+    print("")
 
 
 if __name__ == "__main__":
