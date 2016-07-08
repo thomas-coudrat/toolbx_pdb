@@ -21,16 +21,15 @@ import sys
 
 class Principal_component_analysis:
 
-    def __init__(self, conformations, resList=None):
+    def __init__(self, conformations):
         """
         Create the PCA instance
         """
         self.conformations = conformations
-        self.resList = resList
         self.pcaCoordsArray = None
         self.vars_data = None
 
-    def makePCAcoords(self):
+    def makePCAcoords(self, consensusResidues):
         """
         Create the PCA data on self.conformations
         """
@@ -46,8 +45,12 @@ class Principal_component_analysis:
             conformationDict = self.conformations[confName]
             confPath = conformationDict['path']
 
-            # Get the consensus residue list
-            resList = conformationDict['complex'].getResiduesConsensus()
+            # Get the consensus residue list (if consensusResidues is True)
+            if consensusResidues:
+                resList = conformationDict['complex'].getResiduesConsensus()
+            # Otherwise get the wole residue sequence
+            else:
+                resList = conformationDict['complex'].getResidues()
             # Generate the list of residues and format numbering to match that
             # of the .pdb files to which it gets compared
             resNumbers = [x.split("_")[0].lstrip("0") for x in resList]
@@ -70,6 +73,12 @@ class Principal_component_analysis:
             for confName, coords in zip(sortedConfNames, self.pcaCoordsArray):
                 print(confName, "\t", len(coords))
             print("Exiting.")
+            sys.exit()
+
+        # Verify that coordinates files are not empty
+        if all([x.size == 0 for x in self.pcaCoordsArray]):
+            print("No coordinates were passed to the PCA plotting " \
+                  "function. Exiting.")
             sys.exit()
 
     def getPDBcoord(self, pdbPath, resNumbers):
@@ -105,44 +114,24 @@ class Principal_component_analysis:
                     # Check that the current residue is within the list of
                     # consensus residues. Only get all the C-alphas
                     if ll[resCol] in resNumbers and ll[2] == 'CA':
-                        # If a residue list was provided, upon creation of the
-                        # PCA instance, use it to select which residue
-                        # coordinates to be saved
-                        if self.resList:
-                            if int(line[22:26]) in self.resList:
-                                xCoord = float(line[31:39].strip())
-                                yCoord = float(line[39:47].strip())
-                                zCoord = float(line[47:55].strip())
-                                confCoords = np.concatenate(
-                                    [confCoords, [xCoord]])
-                                confCoords = np.concatenate(
-                                    [confCoords, [yCoord]])
-                                confCoords = np.concatenate(
-                                    [confCoords, [zCoord]])
-                        # Otherwise save all the C-alphas found in the .pdb
-                        # file
-                        else:
-                            xCoord = float(line[31:39].strip())
-                            yCoord = float(line[39:47].strip())
-                            zCoord = float(line[47:55].strip())
-                            confCoords = np.concatenate(
-                                [confCoords, [xCoord]])
-                            confCoords = np.concatenate(
-                                [confCoords, [yCoord]])
-                            confCoords = np.concatenate(
-                                [confCoords, [zCoord]])
+                        xCoord = float(line[31:39].strip())
+                        yCoord = float(line[39:47].strip())
+                        zCoord = float(line[47:55].strip())
+                        confCoords = np.concatenate([confCoords, [xCoord]])
+                        confCoords = np.concatenate([confCoords, [yCoord]])
+                        confCoords = np.concatenate([confCoords, [zCoord]])
 
         return confCoords
 
-    def makePCAvars(self, var_to_plot):
+    def makePCAmetric(self, metric):
         """
         Create a self.vars_data list of variables data, to be used for the
-        plotting of PCA graphs
+        plotting of PCA graphs.
         """
         # Initialize the self.allVariables dict, based on the variable string
         # list passed as argument
         self.vars_data = {}
-        self.vars_data[var_to_plot] = []
+        self.vars_data[metric] = []
 
         # Go through the conformations in alphanumeric order
         sortedConfNames = sorted(self.conformations.keys())
@@ -159,7 +148,7 @@ class Principal_component_analysis:
                 confVar = conformationDict[varName]
                 self.vars_data[varName].append(confVar)
 
-    def plotPCAfig(self, projName, var_to_plot, labels, dim, templates):
+    def plotPCAfig(self, projName, metric, labels, dim, templates):
         """
         After the coords onto which apply PCA have been extracted and stored
         in self.pcaCoordsArray, and..
@@ -170,19 +159,6 @@ class Principal_component_analysis:
         be displayed
         """
         if self.pcaCoordsArray is not None:
-
-            # Verify that conformations have the same number of coordinates
-            if not all([x.size == self.pcaCoordsArray[0].size
-                       for x in self.pcaCoordsArray]):
-                print("Conformations submitted for PCA do not have the same "\
-                      "number of coordinates. Exiting.")
-                sys.exit()
-
-            # Verify that coordinates files are not empty
-            if all([x.size == 0 for x in self.pcaCoordsArray]):
-                print("No coordinates were passed to the PCA plotting " \
-                      "function. Exiting.")
-                sys.exit()
 
             # Calculate PCA
             pca = PCA(n_components=dim)
@@ -202,50 +178,55 @@ class Principal_component_analysis:
             # print X_r[:, 1]
             # print X_r[:, 2]
 
+            # Get the variable/metric to plot. Store the information in
+            # var_axis and var_data. Store None if no variable should be plotted
             if self.vars_data is not None:
-                if var_to_plot in self.vars_data.keys():
+                if metric in self.vars_data.keys():
                     # Get the variable data
-                    varData = self.vars_data[var_to_plot]
-                    if var_to_plot == "tanimoto":
+                    var_data = self.vars_data[metric]
+                    if metric == "tanimoto":
                         var_axis = "Tanimoto coefficient"
-                    elif var_to_plot == "jaccard":
+                    elif metric == "jaccard":
                         var_axis = "Jaccard distance"
                     else:
-                        var_axis = var_to_plot
-                    if dim == 2:
-                        fig2D = plt.figure(figsize=(17, 13), dpi=100)
-                        fig2D.set_facecolor('white')
-                        fig2D.canvas.set_window_title("PCA 2D")
-                        self.pcaSubplot(X_r, dim, varData, var_axis,
-                                        PCs_round, labels, fig2D, 111, templates)
-                    if dim == 3:
-                        fig3D = plt.figure()
-                        fig3D.set_facecolor('white')
-                        fig3D.canvas.set_window_title("PCA 3D")
-                        self.pcaSubplot(X_r, dim, varData, var_axis,
-                                        PCs_round, labels, fig3D, 111, templates)
-
-                    # Save the figure in svg format (and png for quick
-                    # visualization)
-                    plt.savefig(projName + "_PCA.svg", bbox_inches="tight")
-                    plt.savefig(projName + "_PCA.png", bbox_inches="tight")
+                        var_axis = metric
                 else:
-                    print("The variable required is not in the loaded set")
+                    print("The variable {} is not in the loaded set".format(metric))
             else:
-                print("There is no variable data loaded")
-                print("Firt run Principal_component_analysis.makePCAvars(...)")
+                var_data = None
+                var_axis = None
+
+            # Plot the PCA scores, either 2D or 3D
+            if dim == 2:
+                if var_data:
+                    self.pcaSubplot_vars(X_r, dim, var_data, var_axis,
+                                         PCs_round, labels, templates)
+                else:
+                    self.pcaSubplot(X_r, dim, PCs_round, labels, templates)
+            if dim == 3:
+                if var_data:
+                    self.pcaSubplot_vars(X_r, dim, var_data, var_axis,
+                                         PCs_round, labels, fig3D, 111, templates)
+                else:
+                    self.pcaSubplot(X_r, dim, PCs_round, labels, fig3D,
+                                    111, templates)
+
+            # Save the figure in svg format (and png for quick
+            # visualization)
+            plt.savefig(projName + "_PCA.svg", bbox_inches="tight")
+            plt.savefig(projName + "_PCA.png", bbox_inches="tight")
+
         else:
             print("The coords onto which apply the PCA have to be extracted")
-            print("First run Principal_component_analysis.makePCAvars()")
+            print("First run initPCA() then generateProtCoords()")
 
-    def pcaSubplot(self, X_r, dim, varData, varName, PCs_round, labels, fig,
-                   position, template_list):
+    def pcaSubplot_vars(self, X_r, dim, varData, varName, PCs_round, labels,
+                        template_list):
         """
         Get the Principal Component Analysis data for this set of coordinates
         The value of 'dim' specifies the number of dimensions to diplay
         Then plot the PCA data
         """
-
         # Set some figure parameters
         plt.rcParams['xtick.major.pad'] = '8'
         plt.rcParams['ytick.major.pad'] = '8'
@@ -267,7 +248,11 @@ class Principal_component_analysis:
 
         # Plot either PCA data on 2D or 3D
         if dim == 2:
-            ax = fig.add_subplot(position)
+            # Create figure and subplot
+            fig = plt.figure(figsize=(17, 13), dpi=100)
+            fig.set_facecolor('white')
+            fig.canvas.set_window_title("PCA 2D")
+            ax = fig.add_subplot(111)
 
             # Scatter conformations. Designated by circles, colored based on
             # IFP similarity to a defined template
@@ -284,14 +269,13 @@ class Principal_component_analysis:
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
                 ax.annotate(label, xy=(x, y + 0.06), fontsize=30,
                             ha='center', va='bottom')
-
-            # Setting labels and axes parameters
-            ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]), fontsize=30)
-            ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]), fontsize=30)
-            ax.tick_params(axis="both", which="major", labelsize=25)
-
+        # 3D figure
         if dim == 3:
-            ax = fig.add_subplot(position, projection='3d')
+            # Create figure and subplot
+            fig = plt.figure()
+            fig.set_facecolor('white')
+            fig.canvas.set_window_title("PCA 3D")
+            ax = fig.add_subplot(111, projection='3d')
 
             # Conformations
             scat = Axes3D.scatter(ax, confPosition[:, 0],
@@ -313,14 +297,69 @@ class Principal_component_analysis:
                     ax.annotate(label, xy=(x2D, y2D), fontsize=30,
                                 ha='left', va='bottom')
 
-            # Axes and labels
-            ax.set_xlabel("PC1 ({} %".format(PCs_round[0]))
-            ax.set_ylabel("PC2 ({} %".format(PCs_round[1]))
-            ax.set_zlabel("PC3 ({0:g} %".format(PCs_round[2]))
-            ax.tick_params(axis="both", which="major", labelsize=20)
+        # Setting axes and labels
+        ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]))
+        ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]))
+        if dim == 3:
+            ax.set_zlabel("PC3 ({} %)".format(PCs_round[2]))
+        ax.tick_params(axis="both", which="major", labelsize=25)
 
         # Plot the colorbar refering to the variable coloring the conformation
         # dots
         cb = plt.colorbar(scat)
         cb.set_label(varName, size=30)
         cb.ax.tick_params(labelsize=25)
+
+    def pcaSubplot(self, X_r, dim, PCs_round, labels, template_list):
+        """
+        Get the Principal Component Analysis data for this set of coordinates
+        The value of 'dim' specifies the number of dimensions to diplay
+        Then plot the PCA data
+        """
+        # Set some figure parameters
+        plt.rcParams['xtick.major.pad'] = '8'
+        plt.rcParams['ytick.major.pad'] = '8'
+
+        # Plot either PCA data on 2D or 3D
+        if dim == 2:
+            fig = plt.figure(figsize=(15, 13), dpi=100)
+            fig.set_facecolor('white')
+            fig.canvas.set_window_title("PCA 2D")
+            ax = fig.add_subplot(111)
+
+            # Scatter conformations. Designated by circles, colored based on
+            # IFP similarity to a defined template
+            scat = ax.scatter(X_r[:, 0], X_r[:, 1],
+                              s=600, marker="v", color="black")
+
+            # Setting labels for both conformations and templates
+            for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
+                ax.annotate(label, xy=(x, y + 0.06), fontsize=30,
+                            ha='center', va='bottom')
+
+        if dim == 3:
+            fig = plt.figure()
+            fig.set_facecolor('white')
+            fig.canvas.set_window_title("PCA 3D")
+            ax = fig.add_subplot(111, projection='3d')
+
+            # Conformations
+            scat = Axes3D.scatter(ax, X_r[:, 0], X_r[:, 1], X_r[:, 2],
+                                  size=600, marker="o")
+
+            # Scatter plot labels
+            for label, x, y, z in zip(labels, X_r[:, 0], X_r[:, 1], X_r[:, 2]):
+                if label != "":
+                    x2D, y2D, _ = proj3d.proj_transform(x, y, z, ax.get_proj())
+                    ax.annotate(label, xy=(x2D, y2D), fontsize=30,
+                                ha='left', va='bottom')
+
+        # Setting axes and labels
+        ax.set_xlabel("PC1 ({} %".format(PCs_round[0]))
+        ax.xaxis.label.set_size(25)
+        ax.set_ylabel("PC2 ({} %".format(PCs_round[1]))
+        ax.yaxis.label.set_size(25)
+        if dim == 3:
+            ax.set_zlabel("PC3 ({0} %)".format(PCs_round[2]))
+            ax.zaxis.label.set_size(25)
+        ax.tick_params(axis="both", which="major", labelsize=25)

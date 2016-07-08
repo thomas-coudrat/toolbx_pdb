@@ -49,15 +49,25 @@ def main():
 
     # Display PCA score (with or without labels)
     if pca:
+        # Creates a PCA instance
+        ens.initPCA()
+        # Extract the protein coordinates on which PCA is calculated
+        ens.generateProtCoords(consensusResidues=True)
+
+        # Deal with conformation template for comparisons
         if templatePath:
-            # Calculating jaccard distances is required for the PCA score
-            ens.computeDistances(templatePath, "jaccard")
-            ens.makePCA("jaccard")
-            ens.plotPCA(projName, "jaccard", dim=2, confLabels=confLabels)
+            # Optionally compute distances between a template and conformations
+            ens.computeDistances(templatePath, metric="jaccard")
+            # Plot the PCA score
+            ens.calculate_and_plotPCA(projName, dim=2,
+                                      confLabels=confLabels,
+                                      metric="jaccard")
         else:
-            print("\nPCA not calculated: provide a template for " \
-                  "distance comparisons")
-            sys.exit()
+            ens.calculate_and_plotPCA(projName, dim=2,
+                                      confLabels=confLabels)
+            #print("\nPCA not calculated: provide a template for " \
+            #      "distance comparisons")
+            #sys.exit()
 
     writeCommand(projName)
 

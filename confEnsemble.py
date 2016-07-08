@@ -59,33 +59,23 @@ class ConfEnsemble:
                 confName = os.path.basename(confPath).replace(".pdb", "").replace("_", " ").upper()
                 self.conformations[confName] = {'path': confPath}
 
-    def makePCA(self, var_to_plot=None, residues=None):
-        '''
-        Initiate the creation of a PCA object, that will get the PCA for the
-        conformation ensemble 'residues' is a string containing the residues to
-        be included in the PCA. Consider the whole sequence if residues=None
-        '''
-
-        print("Calculating PCA on the conformation ensemble")
-
-        if residues is not None:
-            l_resList = residues.split(",")
-            for i, res in enumerate(l_resList):
-                l_resList[i] = int(res.split("_")[0])
-        else:
-            l_resList = None
-
-        #print(self.conformations)
-        #print(l_resList)
-
+    def initPCA(self):
+        """
+        Initiate PCA object
+        """
         # Create PCA instance
-        self.PCA = PCA.Principal_component_analysis(self.conformations,
-                                                    l_resList)
-        self.PCA.makePCAcoords()
-        if var_to_plot is not None:
-            self.PCA.makePCAvars(var_to_plot)
+        self.PCA = PCA.Principal_component_analysis(self.conformations)
 
-    def plotPCA(self, projName, var_to_plot, dim, confLabels):
+    def generateProtCoords(self, consensusResidues=True):
+        '''
+        Extract protein coordinates data. If consensusResidues is True
+        (default), then calculate PCA on the consensus residue list. Otherwise
+        use the whole residue sequence.
+        '''
+        print("Calculating PCA on the conformation ensemble")
+        self.PCA.makePCAcoords(consensusResidues)
+
+    def calculate_and_plotPCA(self, projName, dim, confLabels, metric=None):
         """
         Print or write plots for the PCA data loaded. Run this after
         self.makePCA has been ran.
@@ -113,8 +103,7 @@ class ConfEnsemble:
                         labels.append("")
 
             # Call the plotPCAfig method
-            self.PCA.plotPCAfig(projName, var_to_plot,
-                                labels, dim, self.templates)
+            self.PCA.plotPCAfig(projName, metric, labels, dim, self.templates)
         else:
             print("Create a PCA object with the function \
                   confEnsemble.makePCA() before plotting PCA data")
@@ -147,10 +136,10 @@ class ConfEnsemble:
 
     def computeDistances(self, templatePath, metric):
         '''
-        Calculate tanimoto coefficient between the chosen template
+        Calculate distance value between the chosen template
         (templatePos) and each of the conformations stored in
-        self.conformations. The tanimoto coefficient is then stored in the
-        corresponding dictionaries, with the key 'tanimoto'.
+        self.conformations. Distance values are then stored in the
+        corresponding dictionaries, under their corresponding distance name.
         '''
 
         # Format the template path into its name
@@ -186,6 +175,9 @@ class ConfEnsemble:
                     #print(fprint_vect, confName)
                     #print(jaccardDist, "\n")
                     conformationDict['jaccard'] = jaccardDist
+
+            # Transfer calculated distances to the PCA object
+            self.PCA.makePCAmetric(metric)
 
             print("\nIFP distances to template: {} " \
                   "were computed using metric: {}\n".format(templateName,
