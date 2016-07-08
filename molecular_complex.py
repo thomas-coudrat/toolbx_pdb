@@ -33,7 +33,6 @@ class Complex:
         selection.
         '''
 
-        #pdbName = os.path.basename(pdbPath).replace(".pdb", "")
         # Load protein, extract residues
         ifsProt = oechem.oemolistream()
         ifsProt.SetFormat(oechem.OEFormat_PDB)
@@ -62,27 +61,37 @@ class Complex:
                             molName = "HIS"
                         resTitle = resNumber + "_" + molName
 
+                        """
+                        if resTitle == "113_ASP":
+                            # Loop over atoms
+                            print(resTitle)
+                            print("Atom, charge, explHcount, totHcount, valence")
+                            for atom in mol.GetAtoms():
+                                charge = atom.GetFormalCharge()
+                                explHcount = atom.GetExplicitHCount()
+                                totHcount = atom.GetTotalHCount()
+                                valence = atom.GetValence()
+                                if charge != 0:
+                                    charge = str(charge) + " CHARGE!"
+                                print(atom, "\t" , charge,explHcount, totHcount, valence)
+                        """
+
                         # Setup the information to store for this residue
-                        #if molName == "ASP":
-                        #    residue = self.createMolecule(mol, resTitle, verbose=True)
-                        #else:
                         residue = self.createMolecule(mol, resTitle)
                         resRings = RingAnalysis(residue).ringsData
                         # Store the information
-                        #print resTitle
                         self.residues[resTitle] = [residue, resRings, True]
                     else:
                         # What to store for the ligand
-                        ligand = self.createMolecule(mol, molName) #, verbose=True)
+                        ligand = self.createMolecule(mol, molName)
                         ligandRings = RingAnalysis(ligand).ringsData
                         # Store it
                         self.ligand = [ligand, ligandRings]
 
-    def createMolecule(self, mol, molTitle, verbose=False):
+    def createMolecule(self, mol, molTitle):
         '''
         Get a OE residue, return a OE molecule
         '''
-
         # Creating a new Res GraphMol
         newMol = oechem.OEGraphMol()
         newMol.SetTitle(molTitle)
@@ -94,47 +103,14 @@ class Complex:
         # Recreate the molecule from atom coordinates #
         #---------------------------------------------#
 
-        # Version 0.1 procedure
-        oechem.OEDetermineConnectivity(newMol)
-        oechem.OEFindRingAtomsAndBonds(newMol)
-        oechem.OEAssignAromaticFlags(newMol, oechem.OEAroModelOpenEye)
-        oechem.OEPerceiveBondOrders(newMol)
-        oechem.OEAddExplicitHydrogens(newMol)
-        oechem.OEAssignImplicitHydrogens(newMol)
-        oechem.OEAssignFormalCharges(newMol)
-        oechem.OEAssignBondiVdWRadii(newMol)
-        #oechem.OEAssignPartialCharges(newMol,
-        #                              oechem.OECharges_None,
-        #                              False,
-        #                              False)
-
-        """
-        # Exploring other procedure (version 0.2)
-        # Set the 3D dimension
-        #oechem.OESetDimensionFromCoords(newMol)
-        # Determine the connectivity between every atom, and assign bond order
+        # Using OpenEye's charge model. Works on molecules with fully specified
+        # hydrogen counts. Charge determined based on atom valence.
         oechem.OEDetermineConnectivity(newMol)
         oechem.OEFindRingAtomsAndBonds(newMol)
         oechem.OEPerceiveBondOrders(newMol)
-        # Determine rings
-        #oechem.OEAssignAromaticFlags(newMol, oechem.OEAroModelOpenEye)
-        # Set hydrogens
         oechem.OEAssignImplicitHydrogens(newMol)
-        #oechem.OEAddExplicitHydrogens(newMol)
-        # Set charge
         oechem.OEAssignFormalCharges(newMol)
-        """
 
-        """
-        # From OpenEye's guide: this sequence recreates the molecule
-        OEDetermineConnectivity(mol)
-        OEFindRingAtomsAndBonds(mol)
-        OEPerceiveBondOrders(mol)
-        OEAssignImplicitHydrogens(mol)
-        OEAssignFormalCharges(mol)
-        """
-
-        """
         # Other things to considered
         # Set atom radius
         #oechem.OEAssignBondiVdWRadii(newMol)
@@ -142,17 +118,61 @@ class Complex:
         #                              oechem.OECharges_None,
         #                              False,
         #                              False)
+
+        # Fix aspartic acid and carboxylic acid charge
+        if "_ASP" in molTitle or "_GLU" in molTitle:
+            self.fixAcid(newMol)
+
+        """
+        pdbName = os.path.basename(self.pdbPath).replace(".pdb", "")
+        if molTitle in ("113_ASP"):#, "ERC"):
+
+            self.fixAcid(newMol)
+
+            print("\nPDB name: {}".format(pdbName))
+            print("Molecule name: {}\n".format(molTitle))
+            #hCount = oechem.OECount(newMol.GetAtoms(oechem.OEIsHydrogen()))
+            #print("Number of hydrogens: {}\n".format(hCount))
+
+            # Loop over atoms
+            print("Atom, charge, explHcount, totHcount, valence")
+            for atom in newMol.GetAtoms():
+                charge = atom.GetFormalCharge()
+                explHcount = atom.GetExplicitHCount()
+                totHcount = atom.GetTotalHCount()
+                valence = atom.GetValence()
+                if charge != 0:
+                    charge = str(charge) + " CHARGE!"
+                print(atom, "\t" , charge,explHcount, totHcount, valence)
+            #ofs = oechem.oemolostream()
+            #if (ofs.open("test_{}-{}.mol2".format(pdbName, molTitle)) == 1):
+            #    oechem.OEWriteMolecule(ofs, newMol)
         """
 
-        if verbose:
-            print("\nMolecule name: {}\n".format(molTitle))
-            for atom in newMol.GetAtoms():
-                print(atom, atom.GetFormalCharge())
-            ofs = oechem.oemolostream()
-            if (ofs.open("test_{}.mol2".format(molTitle)) == 1):
-                oechem.OEWriteMolecule(ofs, newMol)
 
         return newMol
+
+    def fixAcid(self, mol):
+        """
+        Dirty fix that adds a negative formal charge on both Oxygens of the
+        carboxylic acid from ASP and GLU residues. As the charge is attributed
+        to single atoms, some ionic interactions would be missed if proximity
+        is verified with the neutral O atom.
+        """
+        # SMARTS definition for a carboxilic acid
+        carbox = oechem.OESubSearch("[CX3](=O)[O-]")
+
+        #print(mol)
+
+        # Look for pattern in ASP or GLU
+        for match in carbox.Match(mol):
+            for atom in match.GetTargetAtoms():
+                charge = atom.GetFormalCharge()
+                if charge == 0 and "O" in atom.GetName():
+                    atom.SetFormalCharge(-1)
+                charge = atom.GetFormalCharge()
+                #print(atom.GetName(), charge)
+
 
     def printResidues(self):
         '''
@@ -194,7 +214,7 @@ class Complex:
                 if isConsensus:
                     consensusResList.append(resTitle)
 
-            return consensusResList
+        return consensusResList
 
     def printLigand(self):
         '''
