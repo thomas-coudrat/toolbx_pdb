@@ -542,15 +542,20 @@ class ConfEnsemble:
                        labelbottom='off', labelleft='off')
 
         # Create a set of spacers to be used to build the figure
-        spacerX = 1
+        spacerX = 0.7
         # funky spacer calculation so that it gets calculated as a function of
         # the number of comformations
         spacerY = (1 - math.log(confCount, 10)) / 5000
+        # Generate default fprint X values. They get modified in the loop
+        x_pos = []
+        spacerCount = 0
+        for i, bit in enumerate(np.arange(0, fp_length)):
+            x_pos.append(spacerCount)
+            spacerCount = spacerCount + spacerX
+        x_pos = np.array(x_pos)
 
         for y, (fp, conf_name) in enumerate(zip(fprintList, sortedConfNames)):
-            # Generate default fprint X and Y values positions
-            # (X values get modified in the for loop)
-            x_pos = np.arange(0, fp_length)
+            # Generate default fprint Y values positions
             y_pos = np.array([y*spacerY] * fp_length)
 
             # Write conformation names in front of each fprint scatter
@@ -570,10 +575,10 @@ class ConfEnsemble:
                 # to include a gap between fp_segment
                 ax.scatter(x_pos + (i * (fp_length + spacerX)),
                            y_pos,
-                           s=15,
+                           s=5,
                            marker="s",
                            c=colors,
-                           linewidths=0.3)
+                           linewidths=0.1)
 
                 # Write residues only once (arbitrairly in first loop turn)
                 if y == 0:
