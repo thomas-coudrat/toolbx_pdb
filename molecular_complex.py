@@ -78,6 +78,15 @@ class Complex:
 
                         # Setup the information to store for this residue
                         residue = self.createMolecule(mol, resTitle)
+                        #--------------------------------------
+                        # Set of fixes specific for residues
+                        #--------------------------------------
+                        # Fix aspartic acid and carboxylic acid charge
+                        if "_ASP" in resTitle or "_GLU" in resTitle:
+                            self.fixAcid(residue)
+                        # Fix N-term and C-term
+                        #self.fixTerminii(residue)
+
                         resRings = RingAnalysis(residue).ringsData
                         # Store the information
                         self.residues[resTitle] = [residue, resRings, True]
@@ -119,10 +128,6 @@ class Complex:
         #                              False,
         #                              False)
 
-        # Fix aspartic acid and carboxylic acid charge
-        if "_ASP" in molTitle or "_GLU" in molTitle:
-            self.fixAcid(newMol)
-
         """
         pdbName = os.path.basename(self.pdbPath).replace(".pdb", "")
         if molTitle in ("113_ASP"):#, "ERC"):
@@ -148,7 +153,6 @@ class Complex:
             #if (ofs.open("test_{}-{}.mol2".format(pdbName, molTitle)) == 1):
             #    oechem.OEWriteMolecule(ofs, newMol)
         """
-
 
         return newMol
 
