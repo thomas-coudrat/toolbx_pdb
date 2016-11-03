@@ -1,0 +1,18 @@
+#!/usr/bin/icm
+
+call '_startup'
+
+# Parameters that were changed by the sed command
+#pdbTemplatePath = PDB_PATH
+#pdbTemplateName = PDB_NAME
+
+# Load both .pdb files
+read pdb "PDB_PATH"
+
+# Create ICM object where ligand charge is guessed, overwrite
+convertObject a_PDB_NAME. 1==1 no yes no no no yes ""+( 1==2 ? "water=tight ":"" )
+
+# Write the object that was just superimposed, in the same directory
+write pdb a_PDB_NAME. "PDB_PATH"
+
+quit
