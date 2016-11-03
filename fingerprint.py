@@ -372,19 +372,22 @@ class Fingerprint:
         '''
 
         # Look for pattern in residue
-        for matchA in patternA.Match(molA):
-            for atomA in matchA.GetTargetAtoms():
+        try:
+            for matchA in patternA.Match(molA):
+                for atomA in matchA.GetTargetAtoms():
 
-                # Look for pattern in ligand
-                for matchB in patternB.Match(molB):
-                    for atomB in matchB.GetTargetAtoms():
+                    # Look for pattern in ligand
+                    for matchB in patternB.Match(molB):
+                        for atomB in matchB.GetTargetAtoms():
 
-                        # Check distance between those atoms
-                        dist = oechem.OEGetDistance(molA, atomA,
-                                                    molB, atomB)
+                            # Check distance between those atoms
+                            dist = oechem.OEGetDistance(molA, atomA,
+                                                        molB, atomB)
 
-                        if dist <= distCutoff:
-                            return "1"
+                            if dist <= distCutoff:
+                                return "1"
+        except SystemError:
+            pass
 
         # Interaction not found between this residue and the ligand
         return "0"
@@ -399,39 +402,42 @@ class Fingerprint:
         '''
 
         # Look for pattern in residue
-        for matchA in patternA.Match(molA):
-            for atomA in matchA.GetTargetAtoms():
-                if str(atomA).split()[1] == 'H':
-                    protonA = atomA
+        try:
+            for matchA in patternA.Match(molA):
+                for atomA in matchA.GetTargetAtoms():
+                    if str(atomA).split()[1] == 'H':
+                        protonA = atomA
 
-                    # Look for pattern in ligand
-                    for matchB in patternB.Match(molB):
-                        for acceptorB in matchB.GetTargetAtoms():
+                        # Look for pattern in ligand
+                        for matchB in patternB.Match(molB):
+                            for acceptorB in matchB.GetTargetAtoms():
 
-                            # Check distance between those atoms
-                            dist = oechem.OEGetDistance(molA,
-                                                        protonA,
-                                                        molB,
-                                                        acceptorB)
+                                # Check distance between those atoms
+                                dist = oechem.OEGetDistance(molA,
+                                                            protonA,
+                                                            molB,
+                                                            acceptorB)
 
-                            # if the distance meets the cutoff, check angle
-                            if dist <= distCutoff:
-                                #print dist, protonA, acceptorB, \
-                                #      molA.GetTitle(), molB.GetTitle()
-                                # Get the electronegative atom linked to
-                                # the proton
-                                for donorA in protonA.GetAtoms():
-                                    pass
-                                #print donorA
-                                # Check angle: donorA, protonA, acceptorB
-                                angle = oechem.OEGetAngle(molA, donorA,
-                                                          molA, protonA,
-                                                          molB, acceptorB)
-                                #print angle, angleCutUp, angleCutLow
-                                # Compare angle to cutoffs
-                                if angle <= angleCutUp and \
-                                        angle >= angleCutLow:
-                                    return "1"
+                                # if the distance meets the cutoff, check angle
+                                if dist <= distCutoff:
+                                    #print dist, protonA, acceptorB, \
+                                    #      molA.GetTitle(), molB.GetTitle()
+                                    # Get the electronegative atom linked to
+                                    # the proton
+                                    for donorA in protonA.GetAtoms():
+                                        pass
+                                    #print donorA
+                                    # Check angle: donorA, protonA, acceptorB
+                                    angle = oechem.OEGetAngle(molA, donorA,
+                                                              molA, protonA,
+                                                              molB, acceptorB)
+                                    #print angle, angleCutUp, angleCutLow
+                                    # Compare angle to cutoffs
+                                    if angle <= angleCutUp and \
+                                            angle >= angleCutLow:
+                                        return "1"
+        except SystemError:
+            pass
 
         # Interaction not found between this residue and the ligand
         return "0"
