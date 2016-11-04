@@ -61,31 +61,18 @@ class Complex:
                             molName = "HIS"
                         resTitle = resNumber + "_" + molName
 
-                        """
-                        if resTitle == "113_ASP":
-                            # Loop over atoms
-                            print(resTitle)
-                            print("Atom, charge, explHcount, totHcount, valence")
-                            for atom in mol.GetAtoms():
-                                charge = atom.GetFormalCharge()
-                                explHcount = atom.GetExplicitHCount()
-                                totHcount = atom.GetTotalHCount()
-                                valence = atom.GetValence()
-                                if charge != 0:
-                                    charge = str(charge) + " CHARGE!"
-                                print(atom, "\t" , charge,explHcount, totHcount, valence)
-                        """
-
                         # Setup the information to store for this residue
                         residue = self.createMolecule(mol, resTitle)
+
                         #--------------------------------------
                         # Set of fixes specific for residues
                         #--------------------------------------
                         # Fix aspartic acid and carboxylic acid charge
                         if "_ASP" in resTitle or "_GLU" in resTitle:
                             self.fixAcid(residue)
-                        # Fix N-term and C-term
-                        #self.fixTerminii(residue)
+
+                        # Fix N-term and C-term terminii
+                        self.fixTerminii(residue)
 
                         resRings = RingAnalysis(residue).ringsData
                         # Store the information
@@ -128,32 +115,6 @@ class Complex:
         #                              False,
         #                              False)
 
-        """
-        pdbName = os.path.basename(self.pdbPath).replace(".pdb", "")
-        if molTitle in ("113_ASP"):#, "ERC"):
-
-            self.fixAcid(newMol)
-
-            print("\nPDB name: {}".format(pdbName))
-            print("Molecule name: {}\n".format(molTitle))
-            #hCount = oechem.OECount(newMol.GetAtoms(oechem.OEIsHydrogen()))
-            #print("Number of hydrogens: {}\n".format(hCount))
-
-            # Loop over atoms
-            print("Atom, charge, explHcount, totHcount, valence")
-            for atom in newMol.GetAtoms():
-                charge = atom.GetFormalCharge()
-                explHcount = atom.GetExplicitHCount()
-                totHcount = atom.GetTotalHCount()
-                valence = atom.GetValence()
-                if charge != 0:
-                    charge = str(charge) + " CHARGE!"
-                print(atom, "\t" , charge,explHcount, totHcount, valence)
-            #ofs = oechem.oemolostream()
-            #if (ofs.open("test_{}-{}.mol2".format(pdbName, molTitle)) == 1):
-            #    oechem.OEWriteMolecule(ofs, newMol)
-        """
-
         return newMol
 
     def fixAcid(self, mol):
@@ -177,6 +138,78 @@ class Complex:
                 charge = atom.GetFormalCharge()
                 #print(atom.GetName(), charge)
 
+    def fixTerminii(self, mol):
+        """
+        Building residues from HierResidue to mol breaks peptide bonds. This
+        function fixes this by removing the charge on N-H induced by the lack
+        of the bond. The C=O gets an implicit H which does not interfere with
+        IFP creation.
+        """
+        for atom in mol.GetAtoms():
+            atomName = atom.GetName()
+            atomIdx = atom.GetIdx()
+            # Fixing N-H valence
+            if "N" in atomName and atomIdx == 0:
+                #print(atomName, atomIdx)
+                atom.SetFormalCharge(0)
+            # Fixing C=O valence
+            #if "C" in atomName and atomIdx == 2:
+            #    print(atomName, atomIdx)
+            #    atom.SetImplicitHCount(0)
+
+
+    def diagnose_residue(self, mol, resTitle):
+        """
+        Print information about the residue and save it to file. For diagnostic
+        purposes.
+        """
+        # PDB and residue information
+        pdbName = os.path.basename(self.pdbPath).replace(".pdb", "")
+        print("\n#### DIAGNOSTIC start. PDB: {}, Residue: {}\n".format(pdbName,
+                                                                       resTitle))
+        #hCount = oechem.OECount(mol.GetAtoms(oechem.OEIsHydrogen()))
+        #print("Number of hydrogens: {}\n".format(hCount))
+
+        # Loop over atoms
+        print("\tatom, charge, explHcount, totHcount, valence")
+        for atom in mol.GetAtoms():
+            charge = atom.GetFormalCharge()
+            explHcount = atom.GetExplicitHCount()
+            totHcount = atom.GetTotalHCount()
+            valence = atom.GetValence()
+            print("\t", atom, "\t", charge, explHcount, totHcount, valence, end="")
+            if charge != 0:
+                print("  <== CHARGE")
+            else:
+                print("")
+
+        # Write residue to .mol2 file
+        ofs = oechem.oemolostream()
+        if (ofs.open("test_{}-{}.mol2".format(pdbName, resTitle)) == 1):
+            oechem.OEWriteMolecule(ofs, mol)
+
+        # SMARTS pattern matching
+        #smarts = "[CX3]=[OX1]"
+        smarts = "[c,CX3,CX2][H]"
+        print("\nPattern matching: ", smarts)
+        pattern = oechem.OESubSearch(smarts)
+        try:
+            for match in pattern.Match(mol):
+                for atom in match.GetTargetAtoms():
+                    charge = atom.GetFormalCharge()
+                    explHcount = atom.GetExplicitHCount()
+                    totHcount = atom.GetTotalHCount()
+                    valence = atom.GetValence()
+                    print("\t", atom, "\t", charge, explHcount, totHcount, valence, end="")
+                    if charge != 0:
+                        print("  <== CHARGE")
+                    else:
+                        print("")
+        except SystemError:
+            print("\tPattern not found")
+
+        print("\n#### DIAGNOSTIC end. PDB: {}, Residue: {}\n".format(pdbName,
+                                                                     resTitle))
 
     def printResidues(self):
         '''
@@ -331,39 +364,44 @@ class RingAnalysis:
         elif ringSize == 8:
             subSearch = ssAroEight
 
+        oechem.OEPrepareSearch(mol, subSearch)
+
         # match pattern in residue, and cycle through residue atoms
-        for patternMatch in subSearch.Match(mol):
+        try:
+            for patternMatch in subSearch.Match(mol):
 
-            match = patternMatch.GetTargetAtoms()
-            ringAtomList = []
+                match = patternMatch.GetTargetAtoms()
+                ringAtomList = []
 
-            # Store the current match as a list of the atom's Idx
-            # and sort the list, so that two lists containing identical
-            # atoms lists will be considered as being the same ring
-            for atom in match:
-                ringAtomList.append(atom.GetIdx())
-                ringAtomList.sort()
+                # Store the current match as a list of the atom's Idx
+                # and sort the list, so that two lists containing identical
+                # atoms lists will be considered as being the same ring
+                for atom in match:
+                    ringAtomList.append(atom.GetIdx())
+                    ringAtomList.sort()
 
-            # Restore the match iter to the first item,
-            # then get the first of the match
-            # go to the last item of the match iter
-            # then get the last of the match
-            match.ToFirst()
-            for first in match:
-                # going to last ensures the for loop
-                # is only used once (no more items to loop over after last)
-                match.ToLast()
-                # Just store the last OEAtomBase as last
-                for last in match:
-                    pass
+                # Restore the match iter to the first item,
+                # then get the first of the match
+                # go to the last item of the match iter
+                # then get the last of the match
+                match.ToFirst()
+                for first in match:
+                    # going to last ensures the for loop
+                    # is only used once (no more items to loop over after last)
+                    match.ToLast()
+                    # Just store the last OEAtomBase as last
+                    for last in match:
+                        pass
 
-                for bondedToFirst in first.GetAtoms():
-                    if bondedToFirst == last:
-                        if ringAtomList not in moleculeRings:
-                            moleculeRings.append(ringAtomList)
-                        # when a cycle is completed, no need to check
-                        # the rest of the atoms bonded to first, continue
-                        continue
+                    for bondedToFirst in first.GetAtoms():
+                        if bondedToFirst == last:
+                            if ringAtomList not in moleculeRings:
+                                moleculeRings.append(ringAtomList)
+                            # when a cycle is completed, no need to check
+                            # the rest of the atoms bonded to first, continue
+                            continue
+        except SystemError:
+            pass
 
         return moleculeRings
 
