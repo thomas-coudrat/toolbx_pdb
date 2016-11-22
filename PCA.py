@@ -267,7 +267,7 @@ class Principal_component_analysis:
 
             # Setting labels for both conformations and templates
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
-                ax.annotate(label, xy=(x, y + 0.06), fontsize=30,
+                ax.annotate(label, xy=(x, y + 0.05), fontsize=30,
                             ha='center', va='bottom')
         # 3D figure
         if dim == 3:
@@ -298,10 +298,10 @@ class Principal_component_analysis:
                                 ha='left', va='bottom')
 
         # Setting axes and labels
-        ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]))
-        ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]))
+        ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]), fontsize=30)
+        ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]), fontsize=30)
         if dim == 3:
-            ax.set_zlabel("PC3 ({} %)".format(PCs_round[2]))
+            ax.set_zlabel("PC3 ({} %)".format(PCs_round[2]), fontsize=30)
         ax.tick_params(axis="both", which="major", labelsize=25)
 
         # Plot the colorbar refering to the variable coloring the conformation

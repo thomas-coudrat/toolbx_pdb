@@ -34,7 +34,8 @@ def main():
     # Generate a consensus sequence of residues among all conformations
     ens.makeConsensusSeq()
     # Save figure of interaction fingerprints representation
-    ens.plotFprints(projName, ensDir, customFprint)
+    ens.plotFprints(projName, ensDir, customFprint,
+                    templatePath, additionalPaths)
     # Print out IFPs
     # ens.printFprints()
     ens.printFprintsConsensus()

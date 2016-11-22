@@ -472,7 +472,8 @@ class ConfEnsemble:
             print(",".join(resList))
             print(",".join(fprintList) + "\n")
 
-    def plotFprints(self, projName, pdb_dir, fprintDef):
+    def plotFprints(self, projName, pdb_dir, fprintDef,
+                    templatePath, additionalPaths):
         """
         Plot a graph representation of interaction fingerprints
         """
@@ -500,6 +501,10 @@ class ConfEnsemble:
                              c_catPi,
                              c_catPi,
                              c_metal]
+        aa_codes = {"ALA": "A", "GLY": "G", "ILE": "I", "LEU": "L", "PRO": "P",
+                    "VAL": "V", "PHE": "F", "TRP": "W", "TYR": "Y", "ASP": "D",
+                    "GLU": "E", "ARG": "R", "HIS": "H", "LYS": "K", "SER": "S",
+                    "THR": "T", "CYS": "C", "MET": "M", "ASN": "N", "GLN": "Q"}
 
         # Color palette for the current fprint definition
         colors_customFprint = []
@@ -509,16 +514,41 @@ class ConfEnsemble:
 
         # Get the conformations fprints
         fprintList = []
+        # Initialise position lists and template positions
+        addPathPos = []
+        complPos = []
+        templPathPos = False
         # Get the conformation list in descending order, when building the
         # figure that gets them ordered in ascending order
         sortedConfNames = sorted(self.conformations.keys(), reverse=True)
-        for confName in sortedConfNames:
+        # Loop over the conformations to get the data
+        for i, confName in enumerate(sortedConfNames):
             # Get the dictionary of that conf
             conformationDict = self.conformations[confName]
+            # Get the fprint list for "additional conformation(s)"
+            confPath = conformationDict["path"]
+            # Get the fprint list from other complexes
+            fprintList.append(conformationDict['fprint'].getFprintConsensus())
             # Get the residue list
             resList = conformationDict['complex'].getResiduesConsensus()
-            # Get the fprint list
-            fprintList.append(conformationDict['fprint'].getFprintConsensus())
+
+            # Note the position of these for later renumbering
+            if additionalPaths and confPath in additionalPaths:
+                addPathPos.append(i)
+            elif confPath == templatePath:
+                templPathPos = i
+            else:
+                complPos.append(i)
+
+        # Re-order the both the fprintList and the sortedConfNames to put the
+        # additionalConformations first, followed by the template conformation
+        # and finally
+        if templPathPos:
+            new_order_list = complPos + [templPathPos] + addPathPos
+        else:
+            new_order_list = complPos + addPathPos
+        fprintList = [fprintList[i] for i in new_order_list]
+        sortedConfNames = [sortedConfNames[i] for i in new_order_list]
 
         # Get the size of this custom fprint
         fp_length = len(fprintDef.replace("0", ""))
@@ -544,8 +574,10 @@ class ConfEnsemble:
         # Create a set of spacers to be used to build the figure
         spacerX = 0.7
         # funky spacer calculation so that it gets calculated as a function of
-        # the number of comformations
+        # the number of conformations
         spacerY = (1 - math.log(confCount, 10)) / 5000
+        # Spacer multiplier in Y axis
+        #spacerY = 0.00004
         # Generate default fprint X values. They get modified in the loop
         x_pos = []
         spacerCount = 0
@@ -565,7 +597,7 @@ class ConfEnsemble:
             for i, (fp_segment, resName) in enumerate(zip(fp, resList)):
 
                 # Create a set of colors corresponding to "on" bits of that
-                #fp_segment and use colors defined above for the custom fprint
+                # fp_segment and use colors defined above for the custom fprint
                 colors = ["white"] * fp_length
                 for j, bit in enumerate(fp_segment):
                     if bit == "1":
@@ -582,10 +614,21 @@ class ConfEnsemble:
 
                 # Write residues only once (arbitrairly in first loop turn)
                 if y == 0:
-                    ax.text(i * (fp_length + spacerX) + (fp_length/2 - spacerX),
+                    [resNumber, threeLetterCode] = resName.split("_")
+                    # Get the single letter code for this residue
+                    oneLetterCode = aa_codes[threeLetterCode]
+                    # Change the number by removing the leading "0"s
+                    if resNumber[0:2] == "00":
+                        resNumber = resNumber[2]
+                    elif resNumber[0:1] == "0":
+                        resNumber = resNumber[1:3]
+                    # Use this new residue name
+                    new_resName = oneLetterCode + resNumber
+                    ax.text(i * (fp_length + spacerX), # + (fp_length/2 - spacerX),
                             confCount * spacerY,
-                            resName.replace("_", " "), size=4, rotation=90,
+                            new_resName, size=5, # rotation=90,
                             verticalalignment="bottom",
+                            #horizontalalignment="right",
                             family="monospace")
 
         # Set limits on the figure
