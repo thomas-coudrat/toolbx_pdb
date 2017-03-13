@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# https://github.com/thomas-coudrat/toolbx_pdb
+# Thomas Coudrat <thomas.coudrat@gmail.com>
+
 import glob
 import molecular_complex
 import os
@@ -75,7 +78,7 @@ class ConfEnsemble:
         print("Calculating PCA on the conformation ensemble")
         self.PCA.makePCAcoords(consensusResidues)
 
-    def calculate_and_plotPCA(self, projName, dim, confLabels, metric=None):
+    def calculate_and_plotPCA(self, projName, dim, confLabels=None, metric=None):
         """
         Print or write plots for the PCA data loaded. Run this after
         self.makePCA has been ran.
@@ -98,9 +101,12 @@ class ConfEnsemble:
                     # Otherwise, display only the labels in that list
                     elif confName in confLabels:
                         labels.append(confName)
-                    # Store an empty string where nothing should be displayed
+                    # Empty sting if no label was requested for this structure
                     else:
                         labels.append("")
+                # If no label was requested, all structures get an empty string
+                else:
+                    labels.append("")
 
             # Call the plotPCAfig method
             self.PCA.plotPCAfig(projName, metric, labels, dim, self.templates)
@@ -307,6 +313,8 @@ class ConfEnsemble:
         ax.spines['left'].set_color('none')
         ax.spines['right'].set_color('none')
         ax.xaxis.set_ticks_position('bottom')
+        if metric == "jaccard":
+            ax.set_xlabel('Jaccard distance', fontsize=15)
 
         # Save the figure in svg format and png for quick visualization
         plt.savefig(projName + "_Dendro.svg", bbox_inches="tight")

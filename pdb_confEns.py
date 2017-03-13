@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# https://github.com/thomas-coudrat/toolbx_pdb
+# Thomas Coudrat <thomas.coudrat@gmail.com>
+
 import confEnsemble
 import argparse
 import os
@@ -12,7 +15,11 @@ def main():
     """
 
     projName, ensDir, templatePath, additionalPaths, \
-     top, dendro, dendroThresh, pca, confLabels, customFprint = parsing()
+     top, dendro, dendroThresh, pca, pca3D, confLabels, \
+     customFprint, ifp = parsing()
+
+    # Write this command to a text file
+    writeCommand(projName)
 
     # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
@@ -34,8 +41,9 @@ def main():
     # Generate a consensus sequence of residues among all conformations
     ens.makeConsensusSeq()
     # Save figure of interaction fingerprints representation
-    ens.plotFprints(projName, ensDir, customFprint,
-                    templatePath, additionalPaths)
+    if ifp:
+        ens.plotFprints(projName, ensDir, customFprint,
+                        templatePath, additionalPaths)
     # Print out IFPs
     # ens.printFprints()
     ens.printFprintsConsensus()
@@ -63,14 +71,19 @@ def main():
             ens.calculate_and_plotPCA(projName, dim=2,
                                       confLabels=confLabels,
                                       metric="jaccard")
+            if pca3D:
+                ens.calculate_and_plotPCA(projName, dim=3,
+                                          confLabels=confLabels,
+                                          metric="jaccard")
         else:
             ens.calculate_and_plotPCA(projName, dim=2,
                                       confLabels=confLabels)
+            if pca3D:
+                ens.calculate_and_plotPCA(projName, dim=3,
+                                          confLabels=confLabels)
             #print("\nPCA not calculated: provide a template for " \
             #      "distance comparisons")
             #sys.exit()
-
-    writeCommand(projName)
 
 
 def parsing():
@@ -91,6 +104,8 @@ def parsing():
     descr_dendro = "Print-out a dendrogram of the conformations IFPs"
     descr_dendroThresh = "Threshold to color the dendrogram. Value 0 < x < 1."
     descr_pca = "Print-out a PCA graph of the binding pocket conformations"
+    descr_pca3D = "Print-out a PCA graph of the binding pocket conformations in 3D"
+    descr_ifp = "Print-out an IFP diagram"
     descr_confLabel = "List pdb conformations to be identified in PCA and " \
         "Dendrogram plots. Format: 'conformation 1,conformation 4'"
     descr_customFprint = "Provide a custom interaction fingerprint " \
@@ -116,6 +131,8 @@ def parsing():
     parser.add_argument("-dendro", action="store_true", help=descr_dendro)
     parser.add_argument("--dendroThresh", help=descr_dendroThresh)
     parser.add_argument("-pca", action="store_true", help=descr_pca)
+    parser.add_argument("-pca3D", action="store_true", help=descr_pca3D)
+    parser.add_argument("-ifp", action="store_true", help=descr_ifp)
     parser.add_argument("--confLabels", help=descr_confLabel)
     parser.add_argument("-customFprint", help=descr_customFprint)
     args = parser.parse_args()
@@ -162,6 +179,10 @@ def parsing():
 
     pca = args.pca
 
+    pca3D = args.pca3D
+
+    ifp = args.ifp
+
     if args.confLabels:
         confLabels = args.confLabels.split(",")
     else:
@@ -179,7 +200,7 @@ def parsing():
         customFprint = None
 
     return projName, ensDir, templatePath, additionalPaths, \
-        top, dendro, dendroThresh, pca, confLabels, customFprint
+        top, dendro, dendroThresh, pca, pca3D, confLabels, customFprint, ifp
 
 
 def writeCommand(projName):

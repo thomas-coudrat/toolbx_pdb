@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-# -----------------------------------------------------------------------------
 # This script checks all .pdb files in a directory, and writes to a text file
 # the coordinates of the C-alphas of all those .pdb files
 # It also extracts information stored in the REMARK statement at the top of
@@ -8,8 +7,8 @@
 # A sub-list of residues can be submitted (for example binding pocket residues)
 # so that the coordinates of only those residues are extracted and saved.
 #
-# Thomas Coudrat, September 2013
-# -----------------------------------------------------------------------------
+# https://github.com/thomas-coudrat/toolbx_pdb
+# Thomas Coudrat <thomas.coudrat@gmail.com>
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -161,6 +160,7 @@ class Principal_component_analysis:
         if self.pcaCoordsArray is not None:
 
             # Calculate PCA
+            dpiVal = 600
             pca = PCA(n_components=dim)
             X_r = pca.fit(self.pcaCoordsArray).transform(self.pcaCoordsArray)
             # print X_r
@@ -203,18 +203,24 @@ class Principal_component_analysis:
                                          PCs_round, labels, templates)
                 else:
                     self.pcaSubplot(X_r, dim, PCs_round, labels, templates)
+
+                # Save the figure in svg format (and png for quick
+                # visualization)
+                plt.savefig(projName + "_PCA.svg", bbox_inches="tight")
+                plt.savefig(projName + "_PCA.png", bbox_inches="tight",
+                            dpi=dpiVal)
             if dim == 3:
                 if var_data:
                     self.pcaSubplot_vars(X_r, dim, var_data, var_axis,
-                                         PCs_round, labels, fig3D, 111, templates)
+                                         PCs_round, labels, templates)
                 else:
-                    self.pcaSubplot(X_r, dim, PCs_round, labels, fig3D,
-                                    111, templates)
+                    self.pcaSubplot(X_r, dim, PCs_round, labels, templates)
 
-            # Save the figure in svg format (and png for quick
-            # visualization)
-            plt.savefig(projName + "_PCA.svg", bbox_inches="tight")
-            plt.savefig(projName + "_PCA.png", bbox_inches="tight")
+                # Save the figure in svg format (and png for quick
+                # visualization)
+                plt.savefig(projName + "_PCA3D.svg", bbox_inches="tight")
+                plt.savefig(projName + "_PCA3D.png", bbox_inches="tight",
+                            dpi=dpiVal)
 
         else:
             print("The coords onto which apply the PCA have to be extracted")
@@ -257,18 +263,30 @@ class Principal_component_analysis:
             # Scatter conformations. Designated by circles, colored based on
             # IFP similarity to a defined template
             scat = ax.scatter(confPosition[:, 0], confPosition[:, 1],
-                              c=confData, s=600, marker="o",
-                              cmap=plt.cm.viridis,
+                              s=600, marker="o",
+                              cmap=plt.cm.magma,
+                              c=confData,
                               vmin=0.0, vmax=1.0)
 
             # Scatter the template conformation(s). Designated by arrows.
             ax.scatter(templatePosition[:, 0], templatePosition[:, 1],
-                       s=600, marker="v", c="black")
+                       s=600, marker="v", color="black")
 
             # Setting labels for both conformations and templates
             for label, x, y in zip(labels, X_r[:, 0], X_r[:, 1]):
                 ax.annotate(label, xy=(x, y + 0.05), fontsize=30,
                             ha='center', va='bottom')
+
+            # Settin axis and labels
+            ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]), fontsize=30)
+            ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]), fontsize=30)
+            ax.tick_params(axis="both", which="major", labelsize=25)
+
+            # Plot the colorbar
+            cb = plt.colorbar(scat)
+            cb.set_label(varName, size=30)
+            cb.ax.tick_params(labelsize=25)
+
         # 3D figure
         if dim == 3:
             # Create figure and subplot
@@ -278,37 +296,36 @@ class Principal_component_analysis:
             ax = fig.add_subplot(111, projection='3d')
 
             # Conformations
-            scat = Axes3D.scatter(ax, confPosition[:, 0],
-                                  confPosition[:, 1],
-                                  confPosition[:, 2],
-                                  color=varData, size=600, marker="o",
-                                  cmap=plt.cm.viridis,
-                                  vmin=0.0, vmax=1.0)
+            scat = ax.scatter(confPosition[:, 0],
+                              confPosition[:, 1],
+                              confPosition[:, 2],
+                              s=200, marker="o",
+                              cmap=plt.cm.magma,
+                              c=confData,
+                              vmin=0.0, vmax=1.0)
             # Templates
-            Axes3D.scatter(ax, templatePosition[:, 0],
-                                  templatePosition[:, 1],
-                                  templatePosition[:, 2],
-                                  color=black, size=600, marker="v")
+            ax.scatter(templatePosition[:, 0],
+                       templatePosition[:, 1],
+                       templatePosition[:, 2],
+                       c="black", s=200, marker="v")
 
             # Scatter plot labels
             for label, x, y, z in zip(labels, X_r[:, 0], X_r[:, 1], X_r[:, 2]):
                 if label != "":
                     x2D, y2D, _ = proj3d.proj_transform(x, y, z, ax.get_proj())
-                    ax.annotate(label, xy=(x2D, y2D), fontsize=30,
-                                ha='left', va='bottom')
+                    ax.annotate(label, xy=(x2D, y2D), fontsize=10,
+                                ha='left', va='top')
 
-        # Setting axes and labels
-        ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]), fontsize=30)
-        ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]), fontsize=30)
-        if dim == 3:
-            ax.set_zlabel("PC3 ({} %)".format(PCs_round[2]), fontsize=30)
-        ax.tick_params(axis="both", which="major", labelsize=25)
+            # Setting axis and labelsize
+            ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]), fontsize=10)
+            ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]), fontsize=10)
+            ax.set_zlabel("PC3 ({} %)".format(PCs_round[2]), fontsize=10)
+            ax.tick_params(axis="both", which="major", labelsize=10)
 
-        # Plot the colorbar refering to the variable coloring the conformation
-        # dots
-        cb = plt.colorbar(scat)
-        cb.set_label(varName, size=30)
-        cb.ax.tick_params(labelsize=25)
+            # Plot the colorbar
+            cb = plt.colorbar(scat)
+            cb.set_label(varName, size=10)
+            cb.ax.tick_params(labelsize=10)
 
     def pcaSubplot(self, X_r, dim, PCs_round, labels, template_list):
         """
@@ -355,9 +372,9 @@ class Principal_component_analysis:
                                 ha='left', va='bottom')
 
         # Setting axes and labels
-        ax.set_xlabel("PC1 ({} %".format(PCs_round[0]))
+        ax.set_xlabel("PC1 ({} %)".format(PCs_round[0]))
         ax.xaxis.label.set_size(25)
-        ax.set_ylabel("PC2 ({} %".format(PCs_round[1]))
+        ax.set_ylabel("PC2 ({} %)".format(PCs_round[1]))
         ax.yaxis.label.set_size(25)
         if dim == 3:
             ax.set_zlabel("PC3 ({0} %)".format(PCs_round[2]))
