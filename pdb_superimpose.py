@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 
-# ------------------------------------------------------------------------------
-#
 # Work on a conformation ensemble in .pdb format and superimpose them all onto
 # a user chosen .pdb file
 #
-# Thomas Coudrat, February 2014
-# thomas.coudrat@gmail.com
-#
-# ------------------------------------------------------------------------------
+# https://github.com/thomas-coudrat/toolbx_pdb
+# Thomas Coudrat <thomas.coudrat@gmail.com>
 
 import os
 import sys

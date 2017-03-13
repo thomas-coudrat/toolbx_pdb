@@ -1,5 +1,8 @@
 #!/usr/bin/icm
 
+# https://github.com/thomas-coudrat/toolbx_pdb
+# Thomas Coudrat <thomas.coudrat@gmail.com>
+
 call '_startup'
 
 # Parameters that were changed by the sed command

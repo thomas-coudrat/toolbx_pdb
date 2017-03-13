@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# https://github.com/thomas-coudrat/toolbx_pdb
+# Thomas Coudrat <thomas.coudrat@gmail.com>
+
 import argparse
 import glob
 import os

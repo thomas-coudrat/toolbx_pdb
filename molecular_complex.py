@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
+# https://github.com/thomas-coudrat/toolbx_pdb
+# Thomas Coudrat <thomas.coudrat@gmail.com>
+
 from openeye import oechem #, oemolbase
 import os
-
 
 class Complex:
 
@@ -11,7 +13,6 @@ class Complex:
         self.residues = {}
         self.ligand = None
         self.pocketResidues = []
-
         self.correctResNames = ("ALA", "ARG", "ASN", "ASP", "CYS", "GLU",
                                 "GLN", "GLY", "HIS", "ILE", "LEU", "LYS",
                                 "MET", "PHE", "PRO", "SER", "THR", "TRP",
@@ -107,7 +108,7 @@ class Complex:
         oechem.OEAssignImplicitHydrogens(newMol)
         oechem.OEAssignFormalCharges(newMol)
 
-        # Other things to considered
+        # Other things to consider
         # Set atom radius
         #oechem.OEAssignBondiVdWRadii(newMol)
         #oechem.OEAssignPartialCharges(newMol,
