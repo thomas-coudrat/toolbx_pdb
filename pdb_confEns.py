@@ -15,8 +15,8 @@ def main():
     """
 
     projName, ensDir, templatePath, additionalPaths, \
-     top, dendro, dendroThresh, pca, pca3D, confLabels, \
-     customFprint, ifp = parsing()
+        top, dendro, dendroThresh, pca, pca3D, confLabels, \
+        customFprint, ifp = parsing()
 
     # Write this command to a text file
     writeCommand(projName)
@@ -24,9 +24,9 @@ def main():
     # Create the conformation ensemble instance
     ens = confEnsemble.ConfEnsemble(ensDir, top)
 
-    #-----------------------------------------
+    # -----------------------------------------
     # Generate interaction fingerprints (IFP)
-    #-----------------------------------------
+    # -----------------------------------------
 
     # Add the template, this will add it to the list of complexes for the IFPs
     if templatePath:
@@ -48,9 +48,9 @@ def main():
     # ens.printFprints()
     ens.printFprintsConsensus()
 
-    #------------------------------
+    # ------------------------------
     # Optional: Dendrogram and PCA
-    #------------------------------
+    # ------------------------------
 
     # Display dendrogram
     if dendro:
@@ -81,9 +81,9 @@ def main():
             if pca3D:
                 ens.calculate_and_plotPCA(projName, dim=3,
                                           confLabels=confLabels)
-            #print("\nPCA not calculated: provide a template for " \
+            # print("\nPCA not calculated: provide a template for " \
             #      "distance comparisons")
-            #sys.exit()
+            # sys.exit()
 
 
 def parsing():
@@ -104,18 +104,23 @@ def parsing():
     descr_dendro = "Print-out a dendrogram of the conformations IFPs"
     descr_dendroThresh = "Threshold to color the dendrogram. Value 0 < x < 1."
     descr_pca = "Print-out a PCA graph of the binding pocket conformations"
-    descr_pca3D = "Print-out a PCA graph of the binding pocket conformations in 3D"
+    descr_pca3D = "Print-out a PCA graph of the binding pocket " + \
+        "conformations in 3D"
     descr_ifp = "Print-out an IFP diagram"
     descr_confLabel = "List pdb conformations to be identified in PCA and " \
         "Dendrogram plots. Format: 'conformation 1,conformation 4'"
     descr_customFprint = "Provide a custom interaction fingerprint " \
         "description of 11 bits (value 0 or 1), to inactivate or activate " \
-        "of the following IFP descriptiors (in that order): " \
+        "of the following IFP descriptors (in that order): " \
         "[hydrophobe x hydrophobe] " \
         "[donor (res) x acceptor (lig)] " \
         "[donor (lig) x acceptor (res)] " \
-        "[wkDon (res) x acc (lig) or wkDon (res) x wkAcc (lig) or don (res) x wkAcc (lig)] " \
-        "[don (lig) x wkAcc (res) or wkDon (lig) x wkAcc (res) or wkDon (lig) x acc (res)] " \
+        "[wkDon (res) x acc (lig) or " \
+        "wkDon (res) x wkAcc (lig) or " \
+        "don (res) x wkAcc (lig)] " \
+        "[don (lig) x wkAcc (res) or " \
+        "wkDon (lig) x wkAcc (res) or " \
+        "wkDon (lig) x acc (res)] " \
         "[Cation (res) x Anion (lig)] " \
         "[Anion (res) x Cation (lig)] " \
         "[Aromatic face2face and face2edge res x lig AND lig x res] " \
@@ -137,9 +142,9 @@ def parsing():
     parser.add_argument("-customFprint", help=descr_customFprint)
     args = parser.parse_args()
 
-    #-----------------------------
+    # -----------------------------
     # Assign each variable parsed
-    #-----------------------------
+    # -----------------------------
 
     projName = args.projName.replace(" ", "_")
 
@@ -191,10 +196,12 @@ def parsing():
     if args.customFprint:
         customFprint = args.customFprint
         if len(customFprint) != 11:
-            print("Input error: custom fprint definition has to be 11 bits long")
+            print("Input error: custom fprint definition " +
+                  "has to be 11 bits long")
             sys.exit()
         if len(customFprint.replace("0", "").replace("1", "")) != 0:
-            print("Input error: custom fprint definition uses only '0' and/or '1'")
+            print("Input error: custom fprint definition " +
+                  "uses only '0' and/or '1'")
             sys.exit()
     else:
         customFprint = None

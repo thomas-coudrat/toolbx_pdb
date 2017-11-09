@@ -59,7 +59,8 @@ class ConfEnsemble:
                 confPaths = confPaths[0:topX]
 
             for confPath in confPaths:
-                confName = os.path.basename(confPath).replace(".pdb", "").replace("_", " ").upper()
+                confName = os.path.basename(confPath)
+                confName.replace(".pdb", "").replace("_", " ").upper()
                 self.conformations[confName] = {'path': confPath}
 
     def initPCA(self):
@@ -78,7 +79,8 @@ class ConfEnsemble:
         print("Calculating PCA on the conformation ensemble")
         self.PCA.makePCAcoords(consensusResidues)
 
-    def calculate_and_plotPCA(self, projName, dim, confLabels=None, metric=None):
+    def calculate_and_plotPCA(self, projName, dim,
+                              confLabels=None, metric=None):
         """
         Print or write plots for the PCA data loaded. Run this after
         self.makePCA has been ran.
@@ -124,7 +126,8 @@ class ConfEnsemble:
         comparisons (e.g.: tanimoto comparison of fprint)
         '''
         if os.path.isfile(pdbPath) and pdbPath[-4:] == ".pdb":
-            pdbName = os.path.basename(pdbPath).replace(".pdb", "").replace("_", " ").upper()
+            pdbName = os.path.basename(pdbPath)
+            pdbName.replace(".pdb", "").replace("_", " ").upper()
             self.conformations[pdbName] = {'path': pdbPath}
             self.templates.append(pdbName)
         else:
@@ -149,7 +152,8 @@ class ConfEnsemble:
         '''
 
         # Format the template path into its name
-        templateName = os.path.basename(templatePath).replace(".pdb", "").replace("_", " ").upper()
+        templateName = os.path.basename(templatePath)
+        templateName.replace(".pdb", "").replace("_", " ").upper()
 
         # Get the template fprint
         if templateName in self.conformations:
@@ -168,7 +172,8 @@ class ConfEnsemble:
 
                 # Compare two fprints using the tanimoto coefficient
                 if metric == "tanimoto":
-                    tanimotoCoef = self.tanimoto(templateFprintList, fprintList)
+                    tanimotoCoef = self.tanimoto(templateFprintList,
+                                                 fprintList)
                     # Store this coef
                     conformationDict['tanimoto'] = tanimotoCoef
                 # Calculate Jaccard distance between two fprints
@@ -177,17 +182,17 @@ class ConfEnsemble:
                     fprint_vect = np.array(list("".join(fprintList))).astype(bool)
                     jaccardDist = spatial.distance.jaccard(template_vect,
                                                            fprint_vect)
-                    #print(template_vect, templateName)
-                    #print(fprint_vect, confName)
-                    #print(jaccardDist, "\n")
+                    # print(template_vect, templateName)
+                    # print(fprint_vect, confName)
+                    # print(jaccardDist, "\n")
                     conformationDict['jaccard'] = jaccardDist
 
             # Transfer calculated distances to the PCA object
             self.PCA.makePCAmetric(metric)
 
-            print("\nIFP distances to template: {} " \
+            print("\nIFP distances to template: {} " +
                   "were computed using metric: {}\n".format(templateName,
-                                                           metric))
+                                                            metric))
         else:
             print("\nTemplate not found: {}\n".format(templateName))
             sys.exit()
@@ -226,7 +231,7 @@ class ConfEnsemble:
         '''
         # If no dendrogram threshold was provided (None), default to a 0.5
         # threshold
-        if dendroThresh == None:
+        if dendroThresh is None:
             dendroThresh = 0.5
 
         print("\nGenerating dendrogram of conformations based on IFPs")
@@ -239,9 +244,9 @@ class ConfEnsemble:
         # Get all the fprints stored in self.conformations and modify
         # conformation names, ready for the figure
         for confName in sorted(self.conformations.keys()):
-            #--------------------
+            # --------------------
             # Conformation names
-            #--------------------
+            # --------------------
             # Prettify new name
             newConfName = confName.replace("_", " ").replace(".pdb", "").upper()
             # If conformation labels were provided, label them with *
@@ -251,9 +256,9 @@ class ConfEnsemble:
             # Add all conformation "newNames" to the list
             confNamesList.append(newConfName)
 
-            #-------------
+            # -------------
             # Fingerprint
-            #-------------
+            # -------------
             # Get the dictionary of that conf
             conformationDict = self.conformations[confName]
             # Get the fprint list
@@ -261,7 +266,7 @@ class ConfEnsemble:
             # Create a fprint string
             fprintString = "".join(fprintList)
             # Insert a space between each of the bits in that new string
-            #fprintSpacedList.append(list(fprintString).astype(bool))
+            # fprintSpacedList.append(list(fprintString).astype(bool))
             fprintCharList = list(fprintString)
             fprintSpaced = " ".join(fprintCharList)
             fprintSpacedList.append(fprintSpaced)
@@ -269,13 +274,13 @@ class ConfEnsemble:
         # Create a concatenation of the spaced fprints
         fprintConcatenate = " ; ".join(fprintSpacedList)
 
-        #---------------------------
+        # ---------------------------
         # Creation of the dendrogram
-        #---------------------------
+        # ---------------------------
 
         # Create an array with the fprint concatenate
         mat = numpy.matrix(fprintConcatenate)
-        X = numpy.asarray(mat) #.astype(bool)
+        X = numpy.asarray(mat)  # .astype(bool)
 
         # calculate the tanimoto coef into a matrix
         Y = spatial.distance.pdist(X, metric)
@@ -302,10 +307,10 @@ class ConfEnsemble:
         # Add a vertical line for the threshold
         plt.axvline(dendroThresh, linewidth=3,
                     color='grey', linestyle="dashed")
-        #plt.text(s=str(dendroThresh), x=dendroThresh, y=0.25,
+        # plt.text(s=str(dendroThresh), x=dendroThresh, y=0.25,
         #         color="grey", fontsize=15, rotation="vertical")
-        #plt.xticks(list(plt.xticks()[0]) + [dendroThresh])
-        #plt.xticks([dendroThresh], [str(dendroThresh)], color="grey")
+        # plt.xticks(list(plt.xticks()[0]) + [dendroThresh])
+        # plt.xticks([dendroThresh], [str(dendroThresh)], color="grey")
 
         # Changing figure style
         ax.tick_params(axis="x", which="major", labelsize=20)
@@ -463,7 +468,7 @@ class ConfEnsemble:
         '''
 
         # Get the template fprints
-        #for templateName in self.templates
+        # for templateName in self.templates
 
         # Get the conformations fprints
         for confName in self.conformations:
@@ -487,7 +492,7 @@ class ConfEnsemble:
         """
         # If no custom fingerprint was provided (None), then default to using
         # full featured interaction fingerprints
-        if fprintDef == None:
+        if fprintDef is None:
             fprintDef = "111111111111"
 
         # Color definition for the full fprint definition
@@ -585,7 +590,7 @@ class ConfEnsemble:
         # the number of conformations
         spacerY = (1 - math.log(confCount, 10)) / 5000
         # Spacer multiplier in Y axis
-        #spacerY = 0.00004
+        # spacerY = 0.00004
         # Generate default fprint X values. They get modified in the loop
         x_pos = []
         spacerCount = 0
@@ -599,7 +604,7 @@ class ConfEnsemble:
             y_pos = np.array([y*spacerY] * fp_length)
 
             # Write conformation names in front of each fprint scatter
-            ax.text(-30, y_pos[0], conf_name.replace(".pdb",""), size=4)
+            ax.text(-30, y_pos[0], conf_name.replace(".pdb", ""), size=4)
 
             # Loop over each fprint section representing a residue
             for i, (fp_segment, resName) in enumerate(zip(fp, resList)):
@@ -632,16 +637,16 @@ class ConfEnsemble:
                         resNumber = resNumber[1:3]
                     # Use this new residue name
                     new_resName = oneLetterCode + resNumber
-                    ax.text(i * (fp_length + spacerX), # + (fp_length/2 - spacerX),
+                    ax.text(i * (fp_length + spacerX),
                             confCount * spacerY,
-                            new_resName, size=5, # rotation=90,
+                            new_resName, size=5,  # rotation=90,
                             verticalalignment="bottom",
-                            #horizontalalignment="right",
+                            # horizontalalignment="right",
                             family="monospace")
 
         # Set limits on the figure
         ax.set_xlim([-20, len(fp) * (fp_length + spacerX)])
-        #ax.set_ylim([-1 * spacerY, confCount * spacerY])
+        # ax.set_ylim([-1 * spacerY, confCount * spacerY])
 
         # Save the figure in svg format and png for quick visualization
         plt.savefig(projName + "_IFP.svg", bbox_inches="tight")

@@ -37,7 +37,7 @@ class Principal_component_analysis:
 
         # Go through the conformations in alphanumeric order
         sortedConfNames = sorted(self.conformations.keys())
-        #sortedConfNames.sort()
+        # sortedConfNames.sort()
 
         for confName in sortedConfNames:
             # Get the dictionary, and the file path
@@ -64,11 +64,13 @@ class Principal_component_analysis:
         # self.pcaCoordsArray
         self.pcaCoordsArray = np.array(allConfCoords)
 
-        # Check that each element in the array (protein conformation) is of then
-        # same length (contains the same features ie alpha carbon coordinates)
+        # Check that each element in the array (protein conformation) is of
+        # then same length (contains the same features ie alpha carbon
+        # coordinates)
         if not all([len(x) == len(self.pcaCoordsArray[0])
                     for x in self.pcaCoordsArray]):
-            print("\nNumber of coordinates not identical amongst conformations")
+            print("\nNumber of coordinates not identical" +
+                  " amongst conformations")
             for confName, coords in zip(sortedConfNames, self.pcaCoordsArray):
                 print(confName, "\t", len(coords))
             print("Exiting.")
@@ -76,7 +78,7 @@ class Principal_component_analysis:
 
         # Verify that coordinates files are not empty
         if all([x.size == 0 for x in self.pcaCoordsArray]):
-            print("No coordinates were passed to the PCA plotting " \
+            print("No coordinates were passed to the PCA plotting " +
                   "function. Exiting.")
             sys.exit()
 
@@ -107,7 +109,7 @@ class Principal_component_analysis:
                     elif ll[4].isdigit():
                         resCol = 4
                     else:
-                        print("Unrecognized pdb format, check number of " \
+                        print("Unrecognized pdb format, check number of " +
                               "columns. Exiting.")
                         sys.exit()
                     # Check that the current residue is within the list of
@@ -134,7 +136,7 @@ class Principal_component_analysis:
 
         # Go through the conformations in alphanumeric order
         sortedConfNames = sorted(self.conformations.keys())
-        #sortedConfNames.sort()
+        # sortedConfNames.sort()
 
         for confName in sortedConfNames:
             # Get the dictionary, and the file path
@@ -160,7 +162,7 @@ class Principal_component_analysis:
         if self.pcaCoordsArray is not None:
 
             # Calculate PCA
-            dpiVal = 600
+            dpiVal = 800
             pca = PCA(n_components=dim)
             X_r = pca.fit(self.pcaCoordsArray).transform(self.pcaCoordsArray)
             # print X_r
@@ -179,7 +181,8 @@ class Principal_component_analysis:
             # print X_r[:, 2]
 
             # Get the variable/metric to plot. Store the information in
-            # var_axis and var_data. Store None if no variable should be plotted
+            # var_axis and var_data. Store None if no variable should be
+            # plotted
             if self.vars_data is not None:
                 if metric in self.vars_data.keys():
                     # Get the variable data
@@ -191,7 +194,8 @@ class Principal_component_analysis:
                     else:
                         var_axis = metric
                 else:
-                    print("The variable {} is not in the loaded set".format(metric))
+                    print("The variable {} is not in " +
+                          "the loaded set".format(metric))
             else:
                 var_data = None
                 var_axis = None
@@ -200,9 +204,10 @@ class Principal_component_analysis:
             if dim == 2:
                 if var_data:
                     self.pcaSubplot_vars(X_r, dim, var_data, var_axis,
-                                         PCs_round, labels, templates)
+                                         PCs_round, labels, templates, dpiVal)
                 else:
-                    self.pcaSubplot(X_r, dim, PCs_round, labels, templates)
+                    self.pcaSubplot(X_r, dim, PCs_round, labels, templates,
+                                    dpiVal)
 
                 # Save the figure in svg format (and png for quick
                 # visualization)
@@ -212,9 +217,10 @@ class Principal_component_analysis:
             if dim == 3:
                 if var_data:
                     self.pcaSubplot_vars(X_r, dim, var_data, var_axis,
-                                         PCs_round, labels, templates)
+                                         PCs_round, labels, templates, dpiVal)
                 else:
-                    self.pcaSubplot(X_r, dim, PCs_round, labels, templates)
+                    self.pcaSubplot(X_r, dim, PCs_round, labels, templates,
+                                    dpiVal)
 
                 # Save the figure in svg format (and png for quick
                 # visualization)
@@ -227,7 +233,7 @@ class Principal_component_analysis:
             print("First run initPCA() then generateProtCoords()")
 
     def pcaSubplot_vars(self, X_r, dim, varData, varName, PCs_round, labels,
-                        template_list):
+                        template_list, dpiVal):
         """
         Get the Principal Component Analysis data for this set of coordinates
         The value of 'dim' specifies the number of dimensions to diplay
@@ -255,7 +261,7 @@ class Principal_component_analysis:
         # Plot either PCA data on 2D or 3D
         if dim == 2:
             # Create figure and subplot
-            fig = plt.figure(figsize=(17, 13), dpi=100)
+            fig = plt.figure(figsize=(17, 13), dpi=dpiVal)
             fig.set_facecolor('white')
             fig.canvas.set_window_title("PCA 2D")
             ax = fig.add_subplot(111)
@@ -327,7 +333,7 @@ class Principal_component_analysis:
             cb.set_label(varName, size=10)
             cb.ax.tick_params(labelsize=10)
 
-    def pcaSubplot(self, X_r, dim, PCs_round, labels, template_list):
+    def pcaSubplot(self, X_r, dim, PCs_round, labels, template_list, dpiVal):
         """
         Get the Principal Component Analysis data for this set of coordinates
         The value of 'dim' specifies the number of dimensions to diplay
@@ -339,7 +345,7 @@ class Principal_component_analysis:
 
         # Plot either PCA data on 2D or 3D
         if dim == 2:
-            fig = plt.figure(figsize=(15, 13), dpi=100)
+            fig = plt.figure(figsize=(15, 13), dpi=dpiVal)
             fig.set_facecolor('white')
             fig.canvas.set_window_title("PCA 2D")
             ax = fig.add_subplot(111)
