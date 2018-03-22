@@ -44,6 +44,7 @@ class ConfEnsemble:
         self.conformations = {}
         self.templates = []
         self.PCA = None
+        self.consensusRes = None
 
         # Check if any .pdb file were found
         if len(confPaths) == 0:
@@ -456,6 +457,7 @@ class ConfEnsemble:
         consensusLen = str(len(consensusTemp))
         print("\nConsensus sequence of length " + consensusLen + " generated:")
         print(",".join(consensusTemp) + "\n")
+        self.consensusRes = ",".join(consensusTemp)
 
     def printFprints(self):
         '''
@@ -663,6 +665,25 @@ class ConfEnsemble:
             fprintList = conformationDict['fprint'].getFprintConsensus()
 
             # Print the data
-            print(confName, ligObjs[0].GetTitle())
+            print(confName.replace(" ", "_"), ligObjs[0].GetTitle())
             print(",".join(resList))
             print(",".join(fprintList))
+
+    def csvFprintsConsensus(self, projName):
+        '''
+        Print the consensus fprints in self.conformations
+        '''
+
+        # Write CSV header, including consensus residue sequence
+        with open("./" + projName + "_IFP.csv", "w") as f:
+            f.write("Receptor,Ligand," + self.consensusRes + "\n")
+
+            for confName in sorted(self.conformations):
+                # Get the dictionary of that conf
+                conformationDict = self.conformations[confName]
+                # Get the ligand name in the complex
+                ligObjs = conformationDict['complex'].getLigand()
+                # Get the fprint list
+                fprintList = conformationDict['fprint'].getFprintConsensus()
+                # Write the data
+                f.write(confName.replace(" ", "_") + "," + ligObjs[0].GetTitle() + ",".join(fprintList) + "\n")

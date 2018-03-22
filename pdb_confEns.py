@@ -47,6 +47,7 @@ def main():
     # Print out IFPs
     # ens.printFprints()
     ens.printFprintsConsensus()
+    ens.csvFprintsConsensus(projName)
 
     #------------------------------
     # Optional: Dendrogram and PCA
