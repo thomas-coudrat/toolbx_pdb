@@ -10,6 +10,7 @@ import argparse
 import sys
 from glob import glob
 
+
 def main():
     """
     Run the bfac script
@@ -28,7 +29,8 @@ def print_bfactors(pdbDir):
     Calculate average B-factor.
     """
 
-    print("\nAnalysing B-factor from X-ray structures in directory: {}\n".format(pdbDir))
+    print("\nAnalysing B-factor from X-ray structures" +
+          "in directory: {}\n".format(pdbDir))
 
     # Make a list of all .pdb files in the directory given as argument
     pdbFilePaths = glob(pdbDir + "/*.pdb")
@@ -45,9 +47,11 @@ def print_bfactors(pdbDir):
         bFactors = []
         for line in pdbLines:
             ll = line.split()
-            # if the line represents an ATOM, and if this atom is not a hydrogen
+            # if the line represents an ATOM, and if this atom is
+            # not a hydrogen
             if ll[0] == 'ATOM' and ll[2][0] != 'H':
-                # b-factors are written in the pdb files between columns 60 and 67
+                # b-factors are written in the pdb files between
+                # columns 60 and 67
                 bFac = line[60:67].strip()
                 bFac = float(bFac)
                 bFactors.append(bFac)
@@ -63,6 +67,7 @@ def print_bfactors(pdbDir):
         print("atom count:\t {}".format(numAtoms))
         print("bFac avg:\t {}\n".format(bFacTotal / numAtoms))
 
+
 def parsing():
     """
     Parse arguments
@@ -77,6 +82,7 @@ def parsing():
     pdbDir = args.pdbDir
 
     return pdbDir
+
 
 if __name__ == "__main__":
     main()

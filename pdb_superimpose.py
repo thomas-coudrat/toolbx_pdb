@@ -38,6 +38,7 @@ def main():
     # Run the superimposition, using an ICM script
     superimpose(templatePath, pdbPaths, pdbDir, icm, script)
 
+
 def print_and_log(templatePath, pdbDir, pdbPaths):
     """
     Write a log text file that contains the following information: time/date,
@@ -50,7 +51,7 @@ def print_and_log(templatePath, pdbDir, pdbPaths):
     print("-------------------")
     print("\nTemplate: ")
     print("\t" + templatePath)
-    print("\nSuperimposing " + str(len(pdbPaths)) + \
+    print("\nSuperimposing " + str(len(pdbPaths)) +
           " conformations from directory: " + pdbDir)
 
     # Log
@@ -66,6 +67,7 @@ def print_and_log(templatePath, pdbDir, pdbPaths):
         log_file.write("Conformations superimposed:\n")
         for pdb in pdbPaths:
             log_file.write("\t" + basename(pdb) + "\n")
+
 
 def parsing():
     """
@@ -102,8 +104,9 @@ def getPaths():
     icmHome = os.environ.get('ICMHOME')
 
     # Return path to executable if the environment variable was found
-    if icmHome == None:
-        "The ICMHOME environment variable must be set for your system. Exiting."
+    if icmHome is None:
+        print("The ICMHOME environment variable must be set " +
+              "for your system. Exiting.")
         sys.exit()
     else:
         icm = icmHome + "/icm64"

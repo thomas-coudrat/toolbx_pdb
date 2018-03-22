@@ -11,6 +11,7 @@ import sys
 from subprocess import check_output, STDOUT, CalledProcessError
 import time
 
+
 def main():
     """
     Executing script
@@ -33,6 +34,7 @@ def main():
     # Run the process on PDB directory
     process_dir(pdb_paths, pdb_dir)
 
+
 def process_dir(pdb_paths, pdb_dir):
     """
     Go through directory and run command on each PDB file
@@ -43,6 +45,7 @@ def process_dir(pdb_paths, pdb_dir):
             add_charge_and_overwrite(pdb_path)
     else:
         print("\nNo PDB files found in ", pdb_dir)
+
 
 def add_charge_and_overwrite(pdb_path):
     """
@@ -58,10 +61,10 @@ def add_charge_and_overwrite(pdb_path):
 
     # Add pdb_path and pdb_name to the temporary ICM script
     path_sed = "sed -e 's|PDB_PATH|" + pdb_path + "|g' " + temp_script + " -i"
-    #print(path_sed, "\n")
+    # print(path_sed, "\n")
     os.system(path_sed)
     name_sed = "sed -e 's|PDB_NAME|" + pdb_name + "|g' " + temp_script + " -i"
-    #print(name_sed, "\n")
+    # print(name_sed, "\n")
     os.system(name_sed)
 
     # Print conformation name to terminal
@@ -70,7 +73,7 @@ def add_charge_and_overwrite(pdb_path):
     # Execute the temp script
     try:
         command = icm_executable + " -s " + temp_script
-        #print(command)
+        # print(command)
         check_output(command, stderr=STDOUT, shell=True)
     except CalledProcessError as e:
         print("\n Error during the ICM script execution")
@@ -79,6 +82,7 @@ def add_charge_and_overwrite(pdb_path):
 
     # Remove the temp script
     os.remove(temp_script)
+
 
 def getGlobalPaths():
     """
@@ -96,12 +100,14 @@ def getGlobalPaths():
     icmHome = os.environ.get('ICMHOME')
 
     # Return path to executable if the environment variable was found
-    if icmHome == None:
-        "The ICMHOME environment variable must be set for your system. Exiting."
+    if icmHome is None:
+        print("The ICMHOME environment variable must " +
+              "be set for your system. Exiting.")
         sys.exit()
     else:
         global icm_executable
         icm_executable = icmHome + "/icm64"
+
 
 def log(pdb_paths, pdb_dir):
     """
@@ -117,10 +123,11 @@ def log(pdb_paths, pdb_dir):
         log_file.write("### Log of conformations processed for lig charges\n")
         log_file.write("###\n")
         log_file.write("Date & Time: " + date_str + " -- " + time_str + "\n\n")
-        log_file.write("Processing " + str(len(pdb_paths)) + \
+        log_file.write("Processing " + str(len(pdb_paths)) +
                        " conformations from directory: " + pdb_dir + "\n")
         for pdb in pdb_paths:
             log_file.write("\t" + os.path.basename(pdb) + "\n")
+
 
 def parsing():
     """
@@ -134,6 +141,7 @@ def parsing():
     args = parser.parse_args()
 
     return args.pdb_dir
+
 
 if __name__ == "__main__":
     main()
