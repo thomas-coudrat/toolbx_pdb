@@ -583,8 +583,8 @@ class ConfEnsemble:
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
-        ax.tick_params(left="off", top="off", bottom="off", right="off",
-                       labelbottom='off', labelleft='off')
+        ax.tick_params(left="False", top="False", bottom="False", right="False",
+                       labelbottom="False", labelleft="False")
 
         # Create a set of spacers to be used to build the figure
         spacerX = 0.7
