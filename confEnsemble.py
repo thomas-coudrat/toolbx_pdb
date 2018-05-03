@@ -625,7 +625,8 @@ class ConfEnsemble:
                            s=5,
                            marker="s",
                            c=colors,
-                           linewidths=0.1)
+                           linewidths=0.1,
+                           edgecolors="black")
 
                 # Write residues only once (arbitrairly in first loop turn)
                 if y == 0:
