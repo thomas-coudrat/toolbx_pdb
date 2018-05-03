@@ -44,10 +44,15 @@ def main():
     if ifp:
         ens.plotFprints(projName, ensDir, customFprint,
                         templatePath, additionalPaths)
-    # Print out IFPs
-    # ens.printFprints()
+
+    # Generate the consensus IFP
     ens.printFprintsConsensus()
-    ens.csvFprintsConsensus(projName)
+    # If a templatePath is provided, calculate the IFP distances between
+    # template and conformations
+    if templatePath:
+        ens.computeDistances(templatePath, metric="jaccard")
+    # Print out IFPs
+    ens.csvFprintsConsensus(projName, templatePath)
 
     # ------------------------------
     # Optional: Dendrogram and PCA
@@ -66,8 +71,10 @@ def main():
 
         # Deal with conformation template for comparisons
         if templatePath:
-            # Optionally compute distances between a template and conformations
-            ens.computeDistances(templatePath, metric="jaccard")
+            # Generate the IFP metric object in PCA to plot IFP distances in
+            # the PCA score
+            ens.PCA.makePCAmetric(metric="jaccard")
+
             # Plot the PCA score
             ens.calculate_and_plotPCA(projName, dim=2,
                                       confLabels=confLabels,

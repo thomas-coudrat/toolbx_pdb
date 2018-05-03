@@ -188,9 +188,6 @@ class ConfEnsemble:
                     # print(jaccardDist, "\n")
                     conformationDict['jaccard'] = jaccardDist
 
-            # Transfer calculated distances to the PCA object
-            self.PCA.makePCAmetric(metric)
-
             print("\nIFP distances to template: {} " +
                   "were computed using metric: {}\n".format(templateName,
                                                             metric))
@@ -675,14 +672,17 @@ class ConfEnsemble:
             print(",".join(resList))
             print(",".join(fprintList))
 
-    def csvFprintsConsensus(self, projName):
+    def csvFprintsConsensus(self, projName, templatePath):
         '''
         Print the consensus fprints in self.conformations
         '''
 
         # Write CSV header, including consensus residue sequence
         with open("./" + projName + "_IFP.csv", "w") as f:
-            f.write("Receptor,Ligand," + self.consensusRes + "\n")
+            if templatePath:
+                f.write("Receptor,Ligand,IFPdist," + self.consensusRes + "\n")
+            else:
+                f.write("Receptor,Ligand," + self.consensusRes + "\n")
 
             for confName in sorted(self.conformations):
                 # Get the dictionary of that conf
@@ -691,5 +691,11 @@ class ConfEnsemble:
                 ligObjs = conformationDict['complex'].getLigand()
                 # Get the fprint list
                 fprintList = conformationDict['fprint'].getFprintConsensus()
-                # Write the data
-                f.write(confName.replace(" ", "_") + "," + ligObjs[0].GetTitle() + ",".join(fprintList) + "\n")
+                if templatePath:
+                    # Get the jaccard distance between with the template IFP
+                    IFPdist = conformationDict['jaccard']
+                    # Write the data
+                    f.write(confName.replace(" ", "_") + "," + ligObjs[0].GetTitle() + "," + str(IFPdist) + "," + ",".join(fprintList) + "\n")
+                else:
+                    # Write the data
+                    f.write(confName.replace(" ", "_") + "," + ligObjs[0].GetTitle() + "," + ",".join(fprintList) + "\n")
