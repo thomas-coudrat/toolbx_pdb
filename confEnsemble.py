@@ -16,6 +16,7 @@ import matplotlib as mpl
 import PCA
 import numpy as np
 import math
+import json
 
 
 class ConfEnsemble:
@@ -126,6 +127,7 @@ class ConfEnsemble:
         and keeping track of the template structure names will help make
         comparisons (e.g.: tanimoto comparison of fprint)
         '''
+
         if os.path.isfile(pdbPath) and pdbPath[-4:] == ".pdb":
             pdbName = os.path.basename(pdbPath)
             pdbName.replace(".pdb", "").replace("_", " ").upper()
@@ -144,14 +146,65 @@ class ConfEnsemble:
             conformationDict = self.conformations[confName]
             conformationDict['fake'] = 0
 
-    def computeDistances(self, templatePath, metric):
-        '''
-        Calculate distance value between the chosen template
-        (templatePos) and each of the conformations stored in
-        self.conformations. Distance values are then stored in the
-        corresponding dictionaries, under their corresponding distance name.
-        '''
+    def generateQueryIFP(self, queryPath, fprintDef=None):
+        """
+        Generate the query IFP list and return it. Populate all residue IFP with
+        'off' bits (e.g. 00000), and supplied residues with their corresponding
+        IFP pattern.
+        """
 
+        # If fprint definition isn't supplied, default to full length IFPs
+        if fprintDef is None:
+            fprintDef = "111111111111"
+        # Get the count of IFP booleans per residues
+        resIFPcount = fprintDef.count("1")
+
+        # Load json IFP query into a dictionary
+        if os.path.isfile(queryPath) and queryPath[-5:] == ".json":
+            queryName = os.path.basename(queryPath).replace(".json", "")
+            with open(queryPath, "r") as jsonFile:
+                queryDict = json.load(jsonFile)
+        else:
+            print("The following is not a .json file" + queryPath)
+            sys.exit()
+
+        # Get consensus residues from the first conformation (they all contain
+        # the same consensus residues)
+        first_conf_key = list(self.conformations.keys())[0]
+        first_conf = self.conformations[first_conf_key]
+        residues_consensus = first_conf['complex'].getResiduesConsensus()
+
+        queryIFP = []
+        # Loop over consensus residues
+        for resName in residues_consensus:
+            # If this consensus residue name is found in the query dictionary
+            if resName in queryDict.keys():
+                resIFP = queryDict[resName]
+                # Check that it has the correct residue IFP count, if it does,
+                # add it to the queryIFP list
+                if len(resIFP) == resIFPcount:
+                    queryIFP.append(resIFP)
+                # Otherwise abort with error message
+                else:
+                    print(f"IFP residue pattern of '{resName}' doesn't " \
+                          f"match the IFP length per residue of {resIFPcount}")
+                    sys.exit()
+            else:
+                # Add an IFP residue pattern with booleans all turned to off '0'
+                queryIFP.append(resIFPcount * "0")
+
+        # Output progress
+        print("\nQuery IFP data and IFP")
+        print(queryDict)
+        print(",".join(residues_consensus))
+        print(",".join(queryIFP))
+
+        return queryIFP
+
+    def getTemplateIFP(self, templatePath):
+        """
+        Return the IFP from the molecule complex located in templatePath
+        """
         # Format the template path into its name
         templateName = os.path.basename(templatePath)
         templateName.replace(".pdb", "").replace("_", " ").upper()
@@ -160,40 +213,52 @@ class ConfEnsemble:
         if templateName in self.conformations:
             templateDict = self.conformations[templateName]
             templateFprintList = templateDict['fprint'].getFprintConsensus()
-
-            # Go through all the conformations stored in self.conformations
-            # Calculate the tanimoto coef between the chosen template and each
-            # of their fprints, then store that coef in the conformationDict
-            # with a new 'tanimoto' key
-            for confName in sorted(self.conformations.keys()):
-                # Get the dictionary of that conf
-                conformationDict = self.conformations[confName]
-                # Get the fprint list
-                fprintList = conformationDict['fprint'].getFprintConsensus()
-
-                # Compare two fprints using the tanimoto coefficient
-                if metric == "tanimoto":
-                    tanimotoCoef = self.tanimoto(templateFprintList,
-                                                 fprintList)
-                    # Store this coef
-                    conformationDict['tanimoto'] = tanimotoCoef
-                # Calculate Jaccard distance between two fprints
-                elif metric == "jaccard":
-                    template_vect = np.array(list("".join(templateFprintList))).astype(bool)
-                    fprint_vect = np.array(list("".join(fprintList))).astype(bool)
-                    jaccardDist = spatial.distance.jaccard(template_vect,
-                                                           fprint_vect)
-                    # print(template_vect, templateName)
-                    # print(fprint_vect, confName)
-                    # print(jaccardDist, "\n")
-                    conformationDict['jaccard'] = jaccardDist
-
-            print("\nIFP distances to template: {} " +
-                  "were computed using metric: {}\n".format(templateName,
-                                                            metric))
         else:
             print("\nTemplate not found: {}\n".format(templateName))
             sys.exit()
+
+        return templateFprintList, templateName
+
+
+    def computeDistances(self, ifpList, ifpName, metric):
+        '''
+        Calculate distance value between the chosen template
+        (templatePos) and each of the conformations stored in
+        self.conformations. Distance values are then stored in the
+        corresponding dictionaries, under their corresponding distance name.
+        '''
+
+        # Go through all the conformations stored in self.conformations
+        # Calculate the tanimoto coef between the chosen template and each
+        # of their fprints, then store that coef in the conformationDict
+        # with a new 'tanimoto' key
+        for confName in sorted(self.conformations.keys()):
+            # Get the dictionary of that conf
+            conformationDict = self.conformations[confName]
+            # Get the fprint list
+            fprintList = conformationDict['fprint'].getFprintConsensus()
+
+            # Compare two fprints using the tanimoto coefficient
+            if metric == "tanimoto":
+                tanimotoCoef = self.tanimoto(ifpList,
+                                             fprintList)
+                # Store this coef
+                conformationDict['tanimoto'] = tanimotoCoef
+            # Calculate Jaccard distance between two fprints
+            elif metric == "jaccard":
+                template_vect = np.array(list("".join(ifpList))).astype(bool)
+                fprint_vect = np.array(list("".join(fprintList))).astype(bool)
+                jaccardDist = spatial.distance.jaccard(template_vect,
+                                                       fprint_vect)
+                # print(template_vect, templateName)
+                # print(fprint_vect, confName)
+                # print(jaccardDist, "\n")
+                conformationDict['jaccard'] = jaccardDist
+
+            #print(ifpName, confName, jaccardDist)
+
+        print(f"\nIFP {metric} distance:")
+        print(f"- template: {ifpName}")
 
     def tanimoto(self, fprintListA, fprintListB):
         '''
@@ -672,14 +737,14 @@ class ConfEnsemble:
             print(",".join(resList))
             print(",".join(fprintList))
 
-    def csvFprintsConsensus(self, projName, templatePath):
+    def csvFprintsConsensus(self, projName, distance=False):
         '''
         Print the consensus fprints in self.conformations
         '''
 
         # Write CSV header, including consensus residue sequence
         with open("./" + projName + "_IFP.csv", "w") as f:
-            if templatePath:
+            if distance:
                 f.write("Receptor,Ligand,IFPdist," + self.consensusRes + "\n")
             else:
                 f.write("Receptor,Ligand," + self.consensusRes + "\n")
@@ -691,7 +756,7 @@ class ConfEnsemble:
                 ligObjs = conformationDict['complex'].getLigand()
                 # Get the fprint list
                 fprintList = conformationDict['fprint'].getFprintConsensus()
-                if templatePath:
+                if distance:
                     # Get the jaccard distance between with the template IFP
                     IFPdist = conformationDict['jaccard']
                     # Write the data

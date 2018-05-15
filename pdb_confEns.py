@@ -16,7 +16,7 @@ def main():
 
     projName, ensDir, templatePath, additionalPaths, \
         top, dendro, dendroThresh, pca, pca3D, confLabels, \
-        customFprint, ifp = parsing()
+        customFprint, ifp, queryPath = parsing()
 
     # Write this command to a text file
     writeCommand(projName)
@@ -47,12 +47,24 @@ def main():
 
     # Generate the consensus IFP
     ens.printFprintsConsensus()
+
     # If a templatePath is provided, calculate the IFP distances between
     # template and conformations
     if templatePath:
-        ens.computeDistances(templatePath, metric="jaccard")
-    # Print out IFPs
-    ens.csvFprintsConsensus(projName, templatePath)
+        templateIFP, templateName = ens.getTemplateIFP(templatePath)
+        ens.computeDistances(templateIFP, templateName, metric="jaccard")
+
+    # If queryPath is supplied, generate full IFP ready for distance computation
+    if queryPath:
+        queryIFP = ens.generateQueryIFP(queryPath, customFprint)
+        ens.computeDistances(queryIFP, "queryIFP", metric="jaccard")
+
+    # Print out IFPs (including IFP distance if this was calculated from either
+    # the template or the queryIFP).
+    if templatePath or queryPath:
+        ens.csvFprintsConsensus(projName, distance=True)
+    else:
+        ens.csvFprintsConsensus(projName)
 
     # ------------------------------
     # Optional: Dendrogram and PCA
@@ -135,6 +147,10 @@ def parsing():
         "[Cation (res) x Pi (lig)] " \
         "[Pi (res) x Cation (lig)] " \
         "[Acceptor (res) x Metal (lig)]"
+    descr_queryPath = "Provide the path to a json file listing residue codes " \
+        "along with their IFP code (e.g. '201_LYS': '10000000' for " \
+        "hydrophobic contact with Lysine 201). Multiple residues can be " \
+        "supplied."
     parser = argparse.ArgumentParser(description=descr)
     parser.add_argument("projName", help=descr_projName)
     parser.add_argument("ensDir", help=descr_ensDir)
@@ -148,6 +164,7 @@ def parsing():
     parser.add_argument("-ifp", action="store_true", help=descr_ifp)
     parser.add_argument("--confLabels", help=descr_confLabel)
     parser.add_argument("-customFprint", help=descr_customFprint)
+    parser.add_argument("--queryPath", help=descr_queryPath)
     args = parser.parse_args()
 
     # -----------------------------
@@ -214,8 +231,14 @@ def parsing():
     else:
         customFprint = None
 
+    if args.queryPath:
+        queryPath = args.queryPath
+    else:
+        queryPath = False
+
     return projName, ensDir, templatePath, additionalPaths, \
-        top, dendro, dendroThresh, pca, pca3D, confLabels, customFprint, ifp
+        top, dendro, dendroThresh, pca, pca3D, confLabels, customFprint, ifp, \
+        queryPath
 
 
 def writeCommand(projName):
